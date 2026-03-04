@@ -39,6 +39,7 @@ When analyzing traces, distinguish between two types of nodes:
 - Look at which action it chose and whether that action failed
 - Optimize the action's prompt, not the router's prompt
 - Exception: If the router consistently chooses inappropriate actions across many traces, then the router's decision logic may need improvement
+- Note: When an action's output is accepted, it becomes the new code baseline for all subsequent actions (see "Transitive Data Dependency via Code State" below). A downstream action's failure may originate from the code baseline it inherited, not from its own prompt or the router's selection.
 
 ## Agents and Error Types
 
@@ -191,6 +192,39 @@ History: [A: accepted, B: rejected, C: accepted]         Code Baseline: v2
   - Attempt 2's rejected candidate does NOT influence Attempt 3's input code
   - Only the history metadata (action name, acceptance status) is passed forward
 
+### Transitive Data Dependency via Code State
+
+**CRITICAL**: Every accepted action creates a **transitive data dependency** to ALL subsequent actions through the Code State Manager. This is a fundamental system-level fact:
+
+```
+[Position N: Action A] → Candidate → [Accepted] → Code State Manager updates to vK
+                                                         |
+                                                         ↓ (ALL subsequent actions inherit vK)
+[Position N+1: Action B] → receives vK as code input
+[Position N+2: Action C] → receives vK as code input (or later accepted version)
+...
+[Position N+M: Action Z] → receives vK (or later accepted version) as code input
+```
+
+**The dependency chain is**: `Action_A (position N) → [Code State Manager] → Action_B (position N+1)`, even though A and B may use completely different prompts, target different errors, and belong to different agents. This is because Action B's code input is the **output of Action A** (if A is the most recent accepted action).
+
+**Consequence — Code-State Cascade**:
+- If Action A at position N is **accepted** but commits to a **suboptimal proof direction**, ALL subsequent actions inherit that degraded code baseline
+- Even if Action B at position N+1 is a perfectly appropriate strategy with a high-quality prompt, it may fail because Action A's code made the target error harder or impossible to fix
+- When you observe this pattern:
+  1. Action A is **accepted** at position N
+  2. Many different actions **fail consecutively** at positions N+1, N+2, ..., N+K
+  3. The failures span **multiple action types** (not just one repeated action)
+  
+  ...this strongly suggests a **code-state cascade**: Action A's accepted code degraded the baseline. The root cause is position N (or N's router decision), NOT the individual failing actions at N+1 through N+K.
+
+**Concrete Example**: If `case_analysis` is accepted and expands a function into a complex piecewise definition, but the correct approach was `uselemma` (calling an existing helper lemma), then:
+- The code state now contains unnecessary complexity
+- Subsequent actions like `compute`, `arithmetic_reasoning`, `seqsetmap` all fail — not because their prompts are bad, but because the code baseline is on the wrong proof path
+- Root cause: the **router's decision** at the position that chose `case_analysis` instead of `uselemma`
+
+**For Dependency Analysis**: When constructing data dependencies between nodes, any pair `(position_i, position_j)` where `i < j` and position_i's action was **accepted** has a **data dependency** through the Code State Manager: position_j's code input is derived from position_i's accepted output (possibly transitively through other accepted actions in between).
+
 ## 📊 Evaluation and Scoring
 
 ### EvalScore Structure
@@ -214,6 +248,13 @@ For each repair candidate:
    - Acceptance status
    - Error reduction
    - Verified function count
+
+### Compilation Errors vs. Verification Failures
+
+**Important distinction for failure analysis**:
+
+- **Compilation errors** (`compilation_error: true`): The LLM generated syntactically invalid Verus/Rust code (e.g., missing semicolons, wrong type syntax, undefined variables). This is **LLM code generation noise** — it indicates the model failed to produce valid syntax, NOT that the repair strategy (action prompt) was wrong. Compilation errors should generally **not** be attributed to action prompt quality.
+- **Verification failures** (`errors > 0, compilation_error: false`): The code compiled successfully but Verus could not verify it. This IS a meaningful signal about the repair strategy's effectiveness and CAN indicate the action prompt needs improvement or the wrong action was chosen.
 
 ## 🔄 Repair Process Flow
 
@@ -303,4 +344,16 @@ FALSE. There IS memory, but it's limited to metadata (action history), not code 
 ### ✅ CORRECT: "Code input is independent; history input is cumulative"
 - Code input: Always the last accepted baseline (rejected attempts don't change it)
 - History input: Cumulative list of all attempted actions and their results
+
+### ❌ WRONG: "An accepted action is always beneficial — it passed acceptance criteria"
+An accepted action reduces the targeted error count (or satisfies its criteria), but it may simultaneously make the code state **harder to repair** for remaining errors. Acceptance only means the candidate passed its criteria (e.g., `ERROR_REDUCTION`), NOT that it moved the code toward a globally optimal proof strategy. An accepted action can commit the code to a suboptimal proof path that causes all subsequent actions to fail.
+
+### ✅ CORRECT: "Accepted actions can cause downstream failures through code state"
+If Action A is accepted at position N and many subsequent actions fail at positions N+1 through N+K across **different action types**, Action A likely committed to a suboptimal proof direction. The root cause is the decision at position N (or N's router), not the individual actions at N+1 through N+K. This is the **code-state cascade** pattern.
+
+### ❌ WRONG: "Compilation errors mean the action prompt is bad"
+Compilation errors are LLM code generation noise (syntax mistakes), not evidence that the repair strategy was wrong. A good strategy can still produce compilation errors due to LLM limitations, and a bad strategy can still produce compilable code.
+
+### ✅ CORRECT: "Only verification failures reflect repair strategy quality"
+When code compiles but fails verification, the strategy or its execution is questionable. When code doesn't compile, the LLM simply failed to generate valid syntax — this is noise, not signal about prompt quality.
 

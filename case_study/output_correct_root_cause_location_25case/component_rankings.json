@@ -1,0 +1,506 @@
+[
+  {
+    "node": "postcondition_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 569,
+        "accepted": 221,
+        "rejected": 348,
+        "appears_in_failed_traces": 85,
+        "final_failure_count": 17,
+        "cascade_failures": 17
+      },
+      "rejection_rate": 0.6115992970123023,
+      "failure_frequency": 85,
+      "final_failure_rate": 0.029876977152899824,
+      "cascade_score": 1.0,
+      "composite_score": 0.47744288224956066
+    }
+  },
+  {
+    "node": "case_analysis",
+    "metrics": {
+      "stats": {
+        "total_calls": 463,
+        "accepted": 146,
+        "rejected": 317,
+        "appears_in_failed_traces": 55,
+        "final_failure_count": 20,
+        "cascade_failures": 20
+      },
+      "rejection_rate": 0.6846652267818575,
+      "failure_frequency": 55,
+      "final_failure_rate": 0.04319654427645788,
+      "cascade_score": 0.8201925578974759,
+      "composite_score": 0.4373970428969899
+    }
+  },
+  {
+    "node": "compute",
+    "metrics": {
+      "stats": {
+        "total_calls": 138,
+        "accepted": 9,
+        "rejected": 129,
+        "appears_in_failed_traces": 27,
+        "final_failure_count": 13,
+        "cascade_failures": 13
+      },
+      "rejection_rate": 0.9347826086956522,
+      "failure_frequency": 27,
+      "final_failure_rate": 0.09420289855072464,
+      "cascade_score": 0.47098620869112673,
+      "composite_score": 0.4298928939121384
+    }
+  },
+  {
+    "node": "seqsetmap",
+    "metrics": {
+      "stats": {
+        "total_calls": 115,
+        "accepted": 10,
+        "rejected": 105,
+        "appears_in_failed_traces": 20,
+        "final_failure_count": 4,
+        "cascade_failures": 4
+      },
+      "rejection_rate": 0.9130434782608695,
+      "failure_frequency": 20,
+      "final_failure_rate": 0.034782608695652174,
+      "cascade_score": 0.40788446526151445,
+      "composite_score": 0.3859247191392594
+    }
+  },
+  {
+    "node": "add_trigger_assert",
+    "metrics": {
+      "stats": {
+        "total_calls": 31,
+        "accepted": 1,
+        "rejected": 30,
+        "appears_in_failed_traces": 11,
+        "final_failure_count": 1,
+        "cascade_failures": 1
+      },
+      "rejection_rate": 0.967741935483871,
+      "failure_frequency": 11,
+      "final_failure_rate": 0.03225806451612903,
+      "cascade_score": 0.360655737704918,
+      "composite_score": 0.38313114754098365
+    }
+  },
+  {
+    "node": "plain_text_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 86,
+        "accepted": 4,
+        "rejected": 82,
+        "appears_in_failed_traces": 7,
+        "final_failure_count": 4,
+        "cascade_failures": 4
+      },
+      "rejection_rate": 0.9534883720930233,
+      "failure_frequency": 7,
+      "final_failure_rate": 0.046511627906976744,
+      "cascade_score": 0.24134790528233152,
+      "composite_score": 0.35526958105646633
+    }
+  },
+  {
+    "node": "induction",
+    "metrics": {
+      "stats": {
+        "total_calls": 99,
+        "accepted": 19,
+        "rejected": 80,
+        "appears_in_failed_traces": 11,
+        "final_failure_count": 7,
+        "cascade_failures": 7
+      },
+      "rejection_rate": 0.8080808080808081,
+      "failure_frequency": 11,
+      "final_failure_rate": 0.0707070707070707,
+      "cascade_score": 0.3384074941451991,
+      "composite_score": 0.3423178624654034
+    }
+  },
+  {
+    "node": "uselemma",
+    "metrics": {
+      "stats": {
+        "total_calls": 189,
+        "accepted": 72,
+        "rejected": 117,
+        "appears_in_failed_traces": 26,
+        "final_failure_count": 6,
+        "cascade_failures": 6
+      },
+      "rejection_rate": 0.6190476190476191,
+      "failure_frequency": 26,
+      "final_failure_rate": 0.031746031746031744,
+      "cascade_score": 0.5761124121779859,
+      "composite_score": 0.3364605776736924
+    }
+  },
+  {
+    "node": "nonlinear_arithmetic",
+    "metrics": {
+      "stats": {
+        "total_calls": 71,
+        "accepted": 15,
+        "rejected": 56,
+        "appears_in_failed_traces": 9,
+        "final_failure_count": 2,
+        "cascade_failures": 2
+      },
+      "rejection_rate": 0.7887323943661971,
+      "failure_frequency": 9,
+      "final_failure_rate": 0.028169014084507043,
+      "cascade_score": 0.389799635701275,
+      "composite_score": 0.33203034967546624
+    }
+  },
+  {
+    "node": "decfailend_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 18,
+        "accepted": 0,
+        "rejected": 18,
+        "appears_in_failed_traces": 1,
+        "final_failure_count": 1,
+        "cascade_failures": 1
+      },
+      "rejection_rate": 1.0,
+      "failure_frequency": 1,
+      "final_failure_rate": 0.05555555555555555,
+      "cascade_score": 0.06310174342961228,
+      "composite_score": 0.3302870153525891
+    }
+  },
+  {
+    "node": "arithmetic_overflow_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 47,
+        "accepted": 4,
+        "rejected": 43,
+        "appears_in_failed_traces": 4,
+        "final_failure_count": 2,
+        "cascade_failures": 2
+      },
+      "rejection_rate": 0.9148936170212766,
+      "failure_frequency": 4,
+      "final_failure_rate": 0.0425531914893617,
+      "cascade_score": 0.13622170179547227,
+      "composite_score": 0.318478382912286
+    }
+  },
+  {
+    "node": "instantiate_forall",
+    "metrics": {
+      "stats": {
+        "total_calls": 205,
+        "accepted": 98,
+        "rejected": 107,
+        "appears_in_failed_traces": 33,
+        "final_failure_count": 6,
+        "cascade_failures": 6
+      },
+      "rejection_rate": 0.5219512195121951,
+      "failure_frequency": 33,
+      "final_failure_rate": 0.02926829268292683,
+      "cascade_score": 0.5979703356752537,
+      "composite_score": 0.31795992079358737
+    }
+  },
+  {
+    "node": "extensional_equality",
+    "metrics": {
+      "stats": {
+        "total_calls": 121,
+        "accepted": 47,
+        "rejected": 74,
+        "appears_in_failed_traces": 29,
+        "final_failure_count": 3,
+        "cascade_failures": 3
+      },
+      "rejection_rate": 0.6115702479338843,
+      "failure_frequency": 29,
+      "final_failure_rate": 0.024793388429752067,
+      "cascade_score": 0.4353369763205829,
+      "composite_score": 0.3069764861732075
+    }
+  },
+  {
+    "node": "integer_ring",
+    "metrics": {
+      "stats": {
+        "total_calls": 3,
+        "accepted": 0,
+        "rejected": 3,
+        "appears_in_failed_traces": 1,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 1.0,
+      "failure_frequency": 1,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.025631017434296122,
+      "composite_score": 0.3061262034868592
+    }
+  },
+  {
+    "node": "inductive_lemma",
+    "metrics": {
+      "stats": {
+        "total_calls": 26,
+        "accepted": 5,
+        "rejected": 21,
+        "appears_in_failed_traces": 6,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.8076923076923077,
+      "failure_frequency": 6,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.2837626854020297,
+      "composite_score": 0.30506022938809824
+    }
+  },
+  {
+    "node": "instantiate_exists",
+    "metrics": {
+      "stats": {
+        "total_calls": 135,
+        "accepted": 75,
+        "rejected": 60,
+        "appears_in_failed_traces": 18,
+        "final_failure_count": 2,
+        "cascade_failures": 2
+      },
+      "rejection_rate": 0.4444444444444444,
+      "failure_frequency": 18,
+      "final_failure_rate": 0.014814814814814815,
+      "cascade_score": 0.41881342701014834,
+      "composite_score": 0.23954046317980743
+    }
+  },
+  {
+    "node": "loopinv",
+    "metrics": {
+      "stats": {
+        "total_calls": 50,
+        "accepted": 22,
+        "rejected": 28,
+        "appears_in_failed_traces": 2,
+        "final_failure_count": 2,
+        "cascade_failures": 2
+      },
+      "rejection_rate": 0.56,
+      "failure_frequency": 2,
+      "final_failure_rate": 0.04,
+      "cascade_score": 0.2772573510278428,
+      "composite_score": 0.2374514702055686
+    }
+  },
+  {
+    "node": "reveal_with_fuel",
+    "metrics": {
+      "stats": {
+        "total_calls": 30,
+        "accepted": 17,
+        "rejected": 13,
+        "appears_in_failed_traces": 9,
+        "final_failure_count": 1,
+        "cascade_failures": 1
+      },
+      "rejection_rate": 0.43333333333333335,
+      "failure_frequency": 9,
+      "final_failure_rate": 0.03333333333333333,
+      "cascade_score": 0.28831641946396047,
+      "composite_score": 0.20666328389279212
+    }
+  },
+  {
+    "node": "fallback_llm_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 5,
+        "accepted": 2,
+        "rejected": 3,
+        "appears_in_failed_traces": 2,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.6,
+      "failure_frequency": 2,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.09888108248763985,
+      "composite_score": 0.20177621649752797
+    }
+  },
+  {
+    "node": "bit_vector_reasoning",
+    "metrics": {
+      "stats": {
+        "total_calls": 30,
+        "accepted": 18,
+        "rejected": 12,
+        "appears_in_failed_traces": 3,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.4,
+      "failure_frequency": 3,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.2626854020296643,
+      "composite_score": 0.17553708040593285
+    }
+  },
+  {
+    "node": "precondition_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 68,
+        "accepted": 52,
+        "rejected": 16,
+        "appears_in_failed_traces": 10,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.23529411764705882,
+      "failure_frequency": 10,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.41451990632318503,
+      "composite_score": 0.16349221655875468
+    }
+  },
+  {
+    "node": "reveal_opaque",
+    "metrics": {
+      "stats": {
+        "total_calls": 25,
+        "accepted": 17,
+        "rejected": 8,
+        "appears_in_failed_traces": 7,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.32,
+      "failure_frequency": 7,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.2590424147801197,
+      "composite_score": 0.15480848295602395
+    }
+  },
+  {
+    "node": "bitvassert_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 22,
+        "accepted": 19,
+        "rejected": 3,
+        "appears_in_failed_traces": 0,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.13636363636363635,
+      "failure_frequency": 0,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.11345303148581837,
+      "composite_score": 0.06359969720625458
+    }
+  },
+  {
+    "node": "loopnodec_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 9,
+        "accepted": 9,
+        "rejected": 0,
+        "appears_in_failed_traces": 3,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.0,
+      "failure_frequency": 3,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.17486338797814208,
+      "composite_score": 0.03797267759562842
+    }
+  },
+  {
+    "node": "invariant_front_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 7,
+        "accepted": 7,
+        "rejected": 0,
+        "appears_in_failed_traces": 0,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.0,
+      "failure_frequency": 0,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.12451209992193599,
+      "composite_score": 0.0249024199843872
+    }
+  },
+  {
+    "node": "termination_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 2,
+        "accepted": 2,
+        "rejected": 0,
+        "appears_in_failed_traces": 2,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.0,
+      "failure_frequency": 2,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.025631017434296122,
+      "composite_score": 0.007126203486859225
+    }
+  },
+  {
+    "node": "invariant_end_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 1,
+        "accepted": 1,
+        "rejected": 0,
+        "appears_in_failed_traces": 0,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.0,
+      "failure_frequency": 0,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.024720270621909964,
+      "composite_score": 0.004944054124381993
+    }
+  },
+  {
+    "node": "precondition_veclen_repair",
+    "metrics": {
+      "stats": {
+        "total_calls": 1,
+        "accepted": 1,
+        "rejected": 0,
+        "appears_in_failed_traces": 0,
+        "final_failure_count": 0,
+        "cascade_failures": 0
+      },
+      "rejection_rate": 0.0,
+      "failure_frequency": 0,
+      "final_failure_rate": 0.0,
+      "cascade_score": 0.024720270621909964,
+      "composite_score": 0.004944054124381993
+    }
+  }
+]

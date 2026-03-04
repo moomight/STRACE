@@ -1,0 +1,20 @@
+{
+  "case_analysis": [
+    {
+      "trace": "MA__bin_sizes__different_bin_size-20251124-0.json",
+      "location": [
+        5
+      ],
+      "reason": "Accepted expansion degraded baseline (1\u21925 errors). Complex piecewise case analysis committed to wrong proof structure, causing cascade failures in compute (11x), nonlinear_arithmetic (3x), and uselemma (2x)."
+    }
+  ],
+  "assertion_reasoning_pipeline": [
+    {
+      "trace": "MA__bin_sizes__different_bin_size-20251124-0.json",
+      "location": [
+        6
+      ],
+      "reason": "Repeatedly selected COMPUTE (11 times) despite 100% failure rate. Failed to diversify action selection or recognize that case_analysis degraded proof baseline, causing persistent failure loop."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+PHASE 3: CAUSAL CONTEXT EXTRACTION - SUMMARY
+==============================================
+
+Phase 3.1: Representative Trace Sampling
+-----------------------------------------
+Sampled 25 traces (21 unique) across 5 high-priority components:
+- postcondition_repair: 5 traces
+- case_analysis: 5 traces
+- compute: 5 traces
+- seqsetmap: 5 traces
+- add_trigger_assert: 5 traces
+
+Sampling criteria: Distinct failure patterns per component
+
+Phase 3.2: Backward Causal Slicing - Root Cause Attribution
+------------------------------------------------------------
+Applied attribution rules:
+1. ACCEPTED actions causing downstream failures → Code-state cascade
+2. REJECTED actions preceded by router → Router fault (wrong tool selection)
+3. REJECTED actions without router → Action fault (execution failure)
+
+Key findings:
+- postcondition_repair: 5 traces with code-state cascade (position 1 accepted → multiple failures after)
+- case_analysis: 3 traces (2 code-state cascade, 1 rejected action)
+- compute: 1 trace (rejected, but router selected it - router fault)
+- seqsetmap: 3 traces (all rejected actions - direct failures)
+- add_trigger_assert: 3 traces (2 rejected actions, 1 code-state cascade)
+- assertion_reasoning_pipeline: 12 traces (router selected wrong tools)
+
+Phase 3.3: Root Cause Localization (Module-Level)
+--------------------------------------------------
+Final root cause locations saved to: output/root_cause_locations.json
+
+Total: 6 components need prompt optimization
+- 5 action components (postcondition_repair, case_analysis, compute, seqsetmap, add_trigger_assert)
+- 1 router component (assertion_reasoning_pipeline)
+
+Key insight: Many compute/seqsetmap/add_trigger_assert failures attributed to router (assertion_reasoning_pipeline) due to wrong tool selection, not action prompt quality.
+
+Constraints verified:
+✓ All root_cause traces are subset of sampled traces
+✓ All sampled traces have been analyzed

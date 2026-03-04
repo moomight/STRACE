@@ -3,6 +3,95 @@ import asyncio
 from typing import Any
 from claude_agent_sdk import tool
 import json
+
+# @tool(
+#     name="search_context_in_file",
+#     description="Search for a target string in a specified file and return the surrounding context (10 lines before and after each match).",
+#     input_schema={
+#         "file_path": str, 
+#         "target_text": str
+#     }
+# )
+# async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
+#     file_path = args.get("file_path")
+#     target_text = args.get("target_text")
+    
+#     # 1. Basic validation
+#     if not file_path or not os.path.exists(file_path):
+#         return {
+#             "content": [{
+#                 "type": "text",
+#                 "text": f"Error: File does not exist or path is empty: {file_path}"
+#             }],
+#             "isError": True
+#         }
+
+#     try:
+#         # 2. Read file
+#         with open(file_path, 'r', encoding='utf-8') as f:
+#             lines = f.readlines()
+        
+#         all_matches_output = []
+#         match_count = 0
+
+#         # 3. Iterate and search all matches
+#         for i, line in enumerate(lines):
+#             if target_text in line:
+#                 match_count += 1
+                
+#                 # 4. Calculate slice range (10 lines before and after)
+#                 start_idx = max(0, i - 10)
+#                 end_idx = min(len(lines), i + 11)
+                
+#                 # Extract context lines
+#                 context_lines = lines[start_idx:end_idx]
+                
+#                 # Format single match block
+#                 block_content = []
+#                 block_content.append(f"=== Match #{match_count} (at line {i+1}) ===")
+                
+#                 for idx, ctx_line in enumerate(context_lines):
+#                     current_line_no = start_idx + idx + 1
+#                     # Mark the line containing the target string
+#                     prefix = ">> " if (start_idx + idx) == i else "   "
+#                     block_content.append(f"{prefix}Line {current_line_no}: {ctx_line.rstrip()}")
+                
+#                 # Add this complete context block to the results list
+#                 all_matches_output.append("\n".join(block_content))
+        
+#         # 5. Process results
+#         if match_count == 0:
+#             return {
+#                 "content": [{
+#                     "type": "text",
+#                     "text": f"Target string '{target_text}' not found in file {file_path}"
+#                 }]
+#             }
+
+#         # Join all blocks with newline characters
+#         final_output = "\n\n".join(all_matches_output)
+        
+#         return {
+#             "content": [{
+#                 "type": "text",
+#                 "text": f"Found {match_count} matches, details as follows:\n\n{final_output}"
+#             }]
+#         }
+
+#     except Exception as e:
+#         return {
+#             "content": [{
+#                 "type": "text",
+#                 "text": f"Error occurred while reading the file: {str(e)}"
+#             }],
+#             "isError": True
+#         }
+
+
+import os
+import asyncio
+from typing import Any
+from claude_agent_sdk import tool
 import re
 
 @tool(
@@ -147,13 +236,13 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
 
 
 @tool(
-    name="get_trace_structure",
+    name="get_json_structure",
     description="Extract and analyze the structure of a JSON file, recursively breaking down all nested dictionaries and lists. For each value, returns its type and length/size information.",
     input_schema={
         "file_path": str
     }
 )
-async def get_trace_structure(args: dict[str, Any]) -> dict[str, Any]:
+async def get_json_structure(args: dict[str, Any]) -> dict[str, Any]:
     """
     Recursively analyze JSON structure and return detailed type and size information.
     
@@ -453,3 +542,390 @@ async def read_multiple_line_ranges(args: dict[str, Any]) -> dict[str, Any]:
             }],
             "isError": True
         }
+
+
+@tool(
+    name="read_trace_positions",
+    description="Read specific positions (entries) from a trace JSON file and return their content with smart truncation. Works with any trace format: dict with numbered keys (e.g., 'step_1', 'position_2', 'sub_agent_calling_3') or a top-level list. Positions are 1-based. Long string values are automatically truncated to save cost.",
+    input_schema={
+        "type": "object",
+        "properties": {
+            "file_path": {
+                "type": "string",
+                "description": "Path to the trace JSON file"
+            },
+            "positions": {
+                "type": "array",
+                "description": "List of position numbers (1-based) to read, e.g. [1, 4, 5]",
+                "items": {"type": "integer"}
+            },
+            "max_string_length": {
+                "type": "integer",
+                "description": "Maximum characters for any single string value (default: 2000). Longer strings are truncated showing beginning and end.",
+                "default": 2000
+            }
+        },
+        "required": ["file_path", "positions"]
+    }
+)
+async def read_trace_positions(args: dict[str, Any]) -> dict[str, Any]:
+    """
+    Read specific positions from a trace JSON file.
+    
+    Auto-detects trace format:
+    - If top-level is a list: position N → index N-1 (1-based)
+    - If top-level is a dict: tries common key patterns like 
+      'sub_agent_calling_N', 'step_N', 'position_N', or falls back to 
+      the Nth key in insertion order
+    
+    All string values deeper than top level are truncated to max_string_length.
+    """
+    file_path = args.get("file_path")
+    positions = args.get("positions", [])
+    max_len = args.get("max_string_length", 2000)
+    
+    if not file_path or not os.path.exists(file_path):
+        return {
+            "content": [{"type": "text", "text": f"Error: File does not exist: {file_path}"}],
+            "isError": True
+        }
+    
+    if not positions:
+        return {
+            "content": [{"type": "text", "text": "Error: No positions provided."}],
+            "isError": True
+        }
+    
+    def truncate_strings(obj, max_len, depth=0):
+        """Recursively truncate long strings in a JSON object."""
+        if isinstance(obj, str):
+            if len(obj) > max_len:
+                half = max_len // 2
+                return obj[:half] + f"\n... [{len(obj) - max_len} chars truncated] ...\n" + obj[-half:]
+            return obj
+        elif isinstance(obj, dict):
+            return {k: truncate_strings(v, max_len, depth + 1) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [truncate_strings(item, max_len, depth + 1) for item in obj]
+        else:
+            return obj
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Determine how to map position numbers to entries
+        entries = {}  # pos -> (key_label, value)
+        
+        if isinstance(data, list):
+            # List format: position N → index N-1
+            total = len(data)
+            for pos in positions:
+                idx = pos - 1
+                if 0 <= idx < total:
+                    entries[pos] = (f"index {idx}", data[idx])
+                else:
+                    entries[pos] = (None, None)
+        
+        elif isinstance(data, dict):
+            # Dict format: try common numbered-key patterns
+            keys_list = list(data.keys())
+            total = len(keys_list)
+            
+            # Detect key pattern from existing keys
+            key_patterns = [
+                lambda n: f"sub_agent_calling_{n}",
+                lambda n: f"step_{n}",
+                lambda n: f"position_{n}",
+                lambda n: f"node_{n}",
+                lambda n: f"segment_{n}",
+                lambda n: str(n),
+            ]
+            
+            for pos in positions:
+                found = False
+                # Try each pattern
+                for pattern_fn in key_patterns:
+                    key = pattern_fn(pos)
+                    if key in data:
+                        entries[pos] = (key, data[key])
+                        found = True
+                        break
+                
+                if not found:
+                    # Fallback: use Nth key (1-based)
+                    idx = pos - 1
+                    if 0 <= idx < total:
+                        key = keys_list[idx]
+                        entries[pos] = (f"{key} (by order)", data[key])
+                    else:
+                        entries[pos] = (None, None)
+        else:
+            return {
+                "content": [{"type": "text", "text": f"Error: Top-level JSON is {type(data).__name__}, expected dict or list."}],
+                "isError": True
+            }
+        
+        # Format output
+        result_blocks = []
+        for pos in sorted(positions):
+            key_label, value = entries.get(pos, (None, None))
+            
+            if value is None:
+                result_blocks.append(f"=== Position {pos} ===\n⚠️ Not found (total entries: {total})")
+                continue
+            
+            # Truncate long strings recursively
+            truncated_value = truncate_strings(value, max_len)
+            
+            # Format as compact JSON
+            formatted = json.dumps(truncated_value, ensure_ascii=False, indent=2)
+            
+            result_blocks.append(f"=== Position {pos} [{key_label}] ===\n{formatted}")
+        
+        return {
+            "content": [{
+                "type": "text",
+                "text": f"File: {os.path.basename(file_path)} ({total} entries)\n\n" + "\n\n".join(result_blocks)
+            }]
+        }
+    
+    except json.JSONDecodeError as e:
+        return {
+            "content": [{"type": "text", "text": f"Error: Invalid JSON in '{file_path}': {e}"}],
+            "isError": True
+        }
+    except Exception as e:
+        return {
+            "content": [{"type": "text", "text": f"Error: {str(e)}"}],
+            "isError": True
+        }
+
+
+@tool(
+    name="get_trace_statistics",
+    description="Get pre-computed statistics and summaries for all traces. Returns action-level statistics (success/failure rates, error types) and trace summaries without reading full trace content. Much more cost-efficient than reading individual traces.",
+    input_schema={
+        "summary_file": str  # Path to the pre-computed summary JSON file
+    }
+)
+async def get_trace_statistics(args: dict[str, Any]) -> dict[str, Any]:
+    """
+    Read pre-computed trace statistics from JSON summary file.
+    This avoids expensive full-trace reads.
+    """
+    summary_file = args.get("summary_file", "/home/v-yingchang/PO_agent_demo-main/ClaudeAgentSDK/trace_summaries.json")
+    
+    if not os.path.exists(summary_file):
+        return {
+            "content": [{
+                "type": "text",
+                "text": f"Error: Summary file not found: {summary_file}\nPlease run trace_analyzer.py first to generate the summary."
+            }],
+            "isError": True
+        }
+    
+    try:
+        with open(summary_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Format the statistics in a readable way
+        output_lines = ["# Trace Statistics Summary\n"]
+        
+        # Overall summary
+        output_lines.append("## Overall Statistics")
+        summary = data.get("summary", {})
+        total = summary.get("total_traces", 0)
+        success = summary.get("success_traces", 0)
+        failed = summary.get("failed_traces", 0)
+        rejected = summary.get("all_rejected_traces", 0)
+        
+        output_lines.append(f"- Total Traces: {total}")
+        output_lines.append(f"- Success: {success} ({success/total*100:.1f}%)" if total > 0 else "- Success: 0")
+        output_lines.append(f"- Failed: {failed} ({failed/total*100:.1f}%)" if total > 0 else "- Failed: 0")
+        output_lines.append(f"- All Rejected: {rejected} ({rejected/total*100:.1f}%)\n" if total > 0 else "- All Rejected: 0\n")
+        
+        # Action statistics
+        output_lines.append("## Action-Level Statistics")
+        action_stats = data.get("action_statistics", {})
+        
+        # Sort by total calls
+        sorted_actions = sorted(action_stats.items(), key=lambda x: x[1]["total_calls"], reverse=True)
+        
+        for action_name, stats in sorted_actions:
+            output_lines.append(f"\n### {action_name}")
+            output_lines.append(f"- Total Calls: {stats['total_calls']}")
+            output_lines.append(f"- Success: {stats['success_calls']}")
+            output_lines.append(f"- Failed: {stats['failed_calls']}")
+            output_lines.append(f"- Rejected: {stats['rejected_calls']}")
+            output_lines.append(f"- Success Rate: {stats['success_calls']/stats['total_calls']*100:.1f}%" if stats['total_calls'] > 0 else "- Success Rate: N/A")
+            
+            if stats['error_types']:
+                output_lines.append("- Error Types:")
+                for error_type, count in stats['error_types'].items():
+                    output_lines.append(f"  - {error_type}: {count}")
+        
+        # Action chains
+        output_lines.append("\n## Most Common Action Chains")
+        action_chains = data.get("action_chains", {})
+        for chain, count in list(action_chains.items())[:10]:
+            output_lines.append(f"- {chain} (x{count})")
+        
+        # Repeated failures
+        output_lines.append("\n## Repeated Failure Patterns")
+        repeated = data.get("repeated_failures", [])
+        if repeated:
+            output_lines.append(f"Found {len(repeated)} cases of consecutive same-action calls")
+            
+            # Group by action
+            from collections import defaultdict
+            by_action = defaultdict(list)
+            for item in repeated:
+                by_action[item["action"]].append(item["file"])
+            
+            for action, files in by_action.items():
+                output_lines.append(f"\n### {action} ({len(files)} occurrences)")
+                for file in files[:5]:
+                    output_lines.append(f"- {file}")
+                if len(files) > 5:
+                    output_lines.append(f"- ... and {len(files)-5} more")
+        else:
+            output_lines.append("No repeated failure patterns detected")
+        
+        return {
+            "content": [{
+                "type": "text",
+                "text": "\n".join(output_lines)
+            }]
+        }
+    
+    except Exception as e:
+        return {
+            "content": [{
+                "type": "text",
+                "text": f"Error reading summary file: {str(e)}"
+            }],
+            "isError": True
+        }
+
+
+@tool(
+    name="get_trace_detail",
+    description="Get detailed information about a specific trace from the pre-computed summaries. Returns the trace's action chain, status, error patterns, and agent-level details without reading the full trace content.",
+    input_schema={
+        "trace_name": str,  # Name of the trace file (e.g., "extra__mod_add_zero-0.json")
+        "summary_file": str  # Path to the pre-computed summary JSON file (optional)
+    }
+)
+async def get_trace_detail(args: dict[str, Any]) -> dict[str, Any]:
+    """
+    Get detailed information about a specific trace from summaries.
+    Much cheaper than reading the full trace file.
+    """
+    trace_name = args.get("trace_name")
+    summary_file = args.get("summary_file", "/home/v-yingchang/PO_agent_demo-main/ClaudeAgentSDK/trace_summaries.json")
+    
+    if not trace_name:
+        return {
+            "content": [{
+                "type": "text",
+                "text": "Error: trace_name is required"
+            }],
+            "isError": True
+        }
+    
+    if not os.path.exists(summary_file):
+        return {
+            "content": [{
+                "type": "text",
+                "text": f"Error: Summary file not found: {summary_file}\nPlease run trace_analyzer.py first."
+            }],
+            "isError": True
+        }
+    
+    try:
+        with open(summary_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Find the trace
+        trace_details = data.get("trace_details", [])
+        trace_info = None
+        
+        for trace in trace_details:
+            if trace.get("file_name") == trace_name:
+                trace_info = trace
+                break
+        
+        if not trace_info:
+            return {
+                "content": [{
+                    "type": "text",
+                    "text": f"Error: Trace '{trace_name}' not found in summaries"
+                }],
+                "isError": True
+            }
+        
+        # Format the trace detail
+        output_lines = [f"# Trace Detail: {trace_name}\n"]
+        
+        output_lines.append(f"**Final Status**: {trace_info.get('final_status', 'unknown')}")
+        output_lines.append(f"**Total Turns**: {trace_info.get('total_turns', 0)}\n")
+        
+        # Action chain
+        action_chain = trace_info.get("action_chain", [])
+        output_lines.append(f"**Action Chain**: {' -> '.join(action_chain)}\n")
+        
+        # Sub-agent details
+        output_lines.append("## Sub-Agent Details")
+        sub_agents = trace_info.get("sub_agents", {})
+        
+        for agent_key in sorted(sub_agents.keys()):
+            agent = sub_agents[agent_key]
+            output_lines.append(f"\n### {agent_key}")
+            output_lines.append(f"- Name: {agent.get('name')}")
+            output_lines.append(f"- Turns: {agent.get('turns')}")
+            output_lines.append(f"- Accepted: {agent.get('accepted')}")
+            output_lines.append(f"- Has Error: {agent.get('has_error')}")
+            output_lines.append(f"- Candidates: {agent.get('candidates')}")
+            output_lines.append(f"- All Rejected: {agent.get('all_rejected')}")
+            
+            if agent.get('error_types'):
+                output_lines.append(f"- Error Types: {', '.join(agent['error_types'])}")
+        
+        return {
+            "content": [{
+                "type": "text",
+                "text": "\n".join(output_lines)
+            }]
+        }
+    
+    except Exception as e:
+        return {
+            "content": [{
+                "type": "text",
+                "text": f"Error: {str(e)}"
+            }],
+            "isError": True
+        }
+
+
+if __name__ == "__main__":
+    # Test read_multiple_line_ranges
+    test_args = {
+        "file_path": "/home/v-yingchang/PO_agent_demo-main/ClaudeAgentSDK/traces/definitions_u__impl3__lemma_entry_sizes_increase-0.json",
+        "line_ranges": [
+            [28, 52],
+            [79, 103],
+            [130, 154],
+            [181, 205],
+            [232, 256],
+            [283, 307],
+            [334, 358],
+            [385, 409],
+            [436, 460]
+        ]
+    }
+    
+    result = asyncio.run(read_multiple_line_ranges.handler(test_args))
+    print(result["content"][0]["text"][:1000])  # Print first 1000 chars
+    print(f"\n... (total length: {len(result['content'][0]['text'])} characters)")

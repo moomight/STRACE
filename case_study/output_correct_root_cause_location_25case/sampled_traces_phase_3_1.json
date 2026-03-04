@@ -1,0 +1,37 @@
+{
+  "postcondition_repair": [
+    "NR__impl_u__l1__impl2__lemma_interp_aux_contains_implies_interp_of_entry_contains-20251124-0.json",
+    "NR__impl_u__wrapped_token__impl1__lemma_interps_match_aux2-20251124-0.json",
+    "NR__spec_t__mmu__rl2__next_step_preserves_inv_unmapping__inflight_walks-20251129-0.json",
+    "NR__impl_u__os_refinement__step_UnmapEnd_refines-20251128-0.json",
+    "NR__spec_t__mmu__rl2__lemma_invalid_walk_is_invalid_in_writer_mem-20251128-0.json"
+  ],
+  "case_analysis": [
+    "NR__spec_t__mmu__rl2__lemma_valid_not_pending_implies_equal-20251129-0.json",
+    "IR__marshal_v__impl4__lemma_same_views_serialize_the_same-20251127-0.json",
+    "NR__spec_t__mmu__rl2__lemma_valid_implies_equal_walks-20251129-0.json",
+    "IR__seq_is_unique__singleton_seq_to_set_is_singleton_set-20251124-0.json",
+    "ST__pmemutil_calculate_crc_bytes-20251129-0.json"
+  ],
+  "compute": [
+    "IR__single_delivery_model_v__impl2__send_single_cmessage-20251127-0.json",
+    "NR__spec_t__os_invariant__lemma_candidate_mapping_inflight_vmem_overlap_os_implies_hl-20251128-0.json",
+    "NR__spec_t__mmu__rl2__lemma_valid_implies_equal_walks-20251129-0.json",
+    "ST__subregion_serialize_and_write_relative-20251129-0.json",
+    "NR__spec_t__mmu__pt_mem__impl0__lemma_write_seq_read-20251128-0.json"
+  ],
+  "seqsetmap": [
+    "NR__impl_u__wrapped_token__impl1__lemma_interps_match_aux2-20251124-0.json",
+    "NR__impl_u__os_refinement__step_UnmapEnd_refines-20251128-0.json",
+    "IR__single_delivery_state_v__impl3__un_acked_messages_extend-20251127-0.json",
+    "IR__verus_extra__lemma_if_nothing_in_seq_satisfies_filter_then_filter_result_is_empty-20251127-0.json",
+    "ST__inv_L_invariant_imply_crash_recover_for_one_log-20251129-0.json"
+  ],
+  "add_trigger_assert": [
+    "ST__inv_L_if_view_differs_only_in_log_area_parts_not_accessed_by_recovery_then_recover_state_matches-20251129-0.json",
+    "NR__spec_t__mmu__translation__MASK_L3_PG_ADDR-20251127-0.json",
+    "NR__impl_u__os_refinement__no_overlaps_pmem_applied_mappings-20251128-0.json",
+    "ST__logimpl_tentatively_append_to_log-20251130-0.json",
+    "NR__spec_t__mmu__rl2__lemma_valid_not_pending_implies_equal-20251129-0.json"
+  ]
+}

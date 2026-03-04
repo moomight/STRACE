@@ -1,0 +1,21 @@
+{
+  "high_priority_components": [
+    "compute",
+    "assertion_reasoning_pipeline",
+    "nonlinear_arithmetic",
+    "uselemma"
+  ],
+  "rationale": {
+    "compute": "Highest failure count (11 rejections, 100% rate). Router's default choice - optimizing this eliminates the dominant failure mode.",
+    "assertion_reasoning_pipeline": "Router exhibits poor selection - repeatedly picks compute despite 100% failure. Improving routing prevents failure loops.",
+    "nonlinear_arithmetic": "Alternative arithmetic action with 100% failure (3/3). Provides router with working alternative to compute.",
+    "uselemma": "Complete failure (2/2) with zero partial verification. Distinct failure mode with high improvement potential."
+  },
+  "analysis_basis": {
+    "total_traces": 1,
+    "success_rate": "0%",
+    "failure_rate": "100%",
+    "action_nodes": 6,
+    "router_nodes": 1
+  }
+}

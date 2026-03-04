@@ -1,0 +1,244 @@
+{
+  "trace_file": "MA__bin_sizes__different_bin_size-20251124-0.json",
+  "execution_sequence": [
+    {
+      "position": 1,
+      "subagent": "postcondition_repair",
+      "status": "accepted",
+      "is_state_changing": true
+    },
+    {
+      "position": 2,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 3,
+      "subagent": "reveal_opaque",
+      "status": "accepted",
+      "is_state_changing": true
+    },
+    {
+      "position": 4,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 5,
+      "subagent": "case_analysis",
+      "status": "accepted",
+      "is_state_changing": true
+    },
+    {
+      "position": 6,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 7,
+      "subagent": "nonlinear_arithmetic",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 8,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 9,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 10,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 11,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 12,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 13,
+      "subagent": "case_analysis",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 14,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 15,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 16,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 17,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 18,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 19,
+      "subagent": "nonlinear_arithmetic",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 20,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 21,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 22,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 23,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 24,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 25,
+      "subagent": "uselemma",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 26,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 27,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 28,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 29,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 30,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 31,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 32,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 33,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 34,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 35,
+      "subagent": "compute",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 36,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 37,
+      "subagent": "nonlinear_arithmetic",
+      "status": "rejected",
+      "is_state_changing": false
+    },
+    {
+      "position": 38,
+      "subagent": "assertion_reasoning_pipeline",
+      "status": "routing",
+      "is_state_changing": false
+    },
+    {
+      "position": 39,
+      "subagent": "uselemma",
+      "status": "rejected",
+      "is_state_changing": false
+    }
+  ],
+  "state_changing_positions": [
+    1,
+    3,
+    5
+  ]
+}

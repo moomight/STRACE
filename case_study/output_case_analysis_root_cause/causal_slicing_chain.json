@@ -1,0 +1,120 @@
+{
+  "MA__bin_sizes__different_bin_size-20251124-0.json": [
+    {
+      "segment_positions": [
+        9,
+        11,
+        15,
+        17,
+        21,
+        23,
+        27,
+        29,
+        31,
+        33,
+        35
+      ],
+      "representative_manifestation_node": 9,
+      "causal_chain": [
+        1,
+        3,
+        5,
+        9
+      ],
+      "root_cause_subagent": "case_analysis",
+      "root_cause_position": 5,
+      "reason": "Case_analysis was accepted at position 5 but degraded baseline (1→5 errors). Complex piecewise expansion made arithmetic reasoning impossible for compute."
+    },
+    {
+      "segment_positions": [
+        2
+      ],
+      "representative_manifestation_node": 2,
+      "causal_chain": [
+        1,
+        2
+      ],
+      "root_cause_subagent": "N/A",
+      "root_cause_position": "N/A",
+      "reason": "Router successfully selected reveal_opaque which was accepted. No failure."
+    },
+    {
+      "segment_positions": [
+        4
+      ],
+      "representative_manifestation_node": 4,
+      "causal_chain": [
+        1,
+        3,
+        4
+      ],
+      "root_cause_subagent": "N/A",
+      "root_cause_position": "N/A",
+      "reason": "Router successfully selected case_analysis which was accepted. No failure."
+    },
+    {
+      "segment_positions": [
+        6,
+        8,
+        10,
+        12,
+        14,
+        16,
+        18,
+        20,
+        22,
+        24,
+        26,
+        28,
+        30,
+        32,
+        34,
+        36,
+        38
+      ],
+      "representative_manifestation_node": 6,
+      "causal_chain": [
+        1,
+        3,
+        5,
+        6
+      ],
+      "root_cause_subagent": "assertion_reasoning_pipeline",
+      "root_cause_position": 6,
+      "reason": "Router repeatedly selected COMPUTE (11 times) despite 100% failure. Failed to diversify or adapt strategy after observing consistent failures."
+    },
+    {
+      "segment_positions": [
+        7,
+        19,
+        37
+      ],
+      "representative_manifestation_node": 7,
+      "causal_chain": [
+        1,
+        3,
+        5,
+        7
+      ],
+      "root_cause_subagent": "case_analysis",
+      "root_cause_position": 5,
+      "reason": "Inherited degraded baseline from case_analysis at position 5. Complex nested structure made nonlinear arithmetic reasoning intractable."
+    },
+    {
+      "segment_positions": [
+        25,
+        39
+      ],
+      "representative_manifestation_node": 25,
+      "causal_chain": [
+        1,
+        3,
+        5,
+        25
+      ],
+      "root_cause_subagent": "case_analysis",
+      "root_cause_position": 5,
+      "reason": "Uselemma inherited degraded baseline from position 5. Generated syntax errors attempting to work with overly complex proof structure."
+    }
+  ]
+}
