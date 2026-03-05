@@ -1,0 +1,179 @@
+================================================================================
+                    PHASE 3: CAUSAL CONTEXT EXTRACTION
+                              RESULTS SUMMARY
+================================================================================
+
+EXECUTION STATUS: ✅ COMPLETE
+
+--------------------------------------------------------------------------------
+PHASE 3.1: REPRESENTATIVE TRACES SAMPLING
+--------------------------------------------------------------------------------
+Selected Subagent:        instantiate_forall
+Sampled Traces:           1 trace
+Trace File:               NR__impl_u__os_refinement__no_overlaps_pmem_applied_mappings-20251128-0.json
+Total Positions:          37
+Failure Pattern:          14 rejections of instantiate_forall
+
+--------------------------------------------------------------------------------
+PHASE 3.2: BACKWARD CAUSAL SLICING
+--------------------------------------------------------------------------------
+State-Changing Positions: 5 accepted nodes [1, 3, 5, 9, 29]
+Causal Segments Found:    2 distinct segments
+
+Segment 1:
+  - Manifestation Positions: [11, 13, 15, 17, 19, 21, 23, 27]  (8 failures)
+  - Representative Node:     11
+  - Causal Chain:            [1, 3, 5, 9, 11]
+
+Segment 2:
+  - Manifestation Positions: [31, 33, 35, 37]  (4 failures)
+  - Representative Node:     31
+  - Causal Chain:            [1, 3, 5, 9, 29, 31]
+
+--------------------------------------------------------------------------------
+PHASE 3.3: FAILURE ATTRIBUTION
+--------------------------------------------------------------------------------
+
+ROOT CAUSE 1: uselemma (Position 9)
+  Trace:     NR__impl_u__os_refinement__no_overlaps_pmem_applied_mappings-20251128-0.json
+  Impact:    8 downstream failures (Segment 1)
+  Issue:     Added vaddr_distinct lemma call but did not complete the proof
+             bridge to show how c1 != c2 implies !overlap using the invariant
+             inv_inflight_pmem_no_overlap_inflight_pmem, leaving downstream
+             positions to struggle with incomplete proof structure
+  
+  Attribution Logic:
+    ✅ Not LLM generation noise (verification failure)
+    ✅ Output baseline degraded (incomplete proof)
+    ✅ Action selection correct (vaddr_distinct appropriate)
+    ❌ Execution incomplete (did not bridge to goal)
+    → ROOT CAUSE: uselemma at position 9
+
+ROOT CAUSE 2: instantiate_forall (Position 29)
+  Trace:     NR__impl_u__os_refinement__no_overlaps_pmem_applied_mappings-20251128-0.json
+  Impact:    4 downstream failures (Segment 2)
+  Issue:     Introduced contrapositive reasoning structure (assert c1 == c2 to
+             derive contradiction) but implemented it incorrectly with wrong
+             quantifier instantiation, creating a more complex and broken proof
+             that degraded the baseline
+  
+  Attribution Logic:
+    ✅ Not LLM generation noise (verification failure)
+    ✅ Output baseline degraded (incorrect proof structure)
+    ❌ Strategy flawed (contrapositive incorrectly implemented)
+    → ROOT CAUSE: instantiate_forall at position 29
+
+--------------------------------------------------------------------------------
+PHASE 3.4: ROOT CAUSE LOCALIZATION
+--------------------------------------------------------------------------------
+
+Root Cause Components: 2 components identified
+
+┌─────────────────────┬──────────┬────────────────────┬──────────────┐
+│ Component           │ Position │ Downstream Failures│ Priority     │
+├─────────────────────┼──────────┼────────────────────┼──────────────┤
+│ uselemma            │    9     │         8          │   HIGH       │
+│ instantiate_forall  │   29     │         4          │   MEDIUM     │
+└─────────────────────┴──────────┴────────────────────┴──────────────┘
+
+--------------------------------------------------------------------------------
+KEY INSIGHT: MANIFESTATION ≠ ROOT CAUSE
+--------------------------------------------------------------------------------
+
+Phase 2 Analysis (Statistical):
+  ❌ Selected: instantiate_forall (14 rejections = manifestation)
+  
+Phase 3 Analysis (Causal):
+  ✅ Root Cause 1: uselemma (caused 8 of 14 failures = 57%)
+  ✅ Root Cause 2: instantiate_forall (caused 4 of 14 failures = 29%)
+
+Conclusion: Causal backtracking reveals the PRIMARY root cause (uselemma)
+            was NOT the highest-failure component in statistical analysis.
+            This demonstrates the critical value of Phase 3 analysis.
+
+--------------------------------------------------------------------------------
+CODE-STATE CASCADE PATTERN DETECTED
+--------------------------------------------------------------------------------
+
+Pattern: Accepted action → degraded baseline → cascading downstream failures
+
+Evidence:
+  Position 9 (uselemma) accepted
+    ↓ degraded baseline (incomplete proof)
+    └─→ Positions 11, 13, 15, 17, 19, 21, 23, 27 rejected
+
+  Position 29 (instantiate_forall) accepted
+    ↓ degraded baseline (incorrect contrapositive)
+    └─→ Positions 31, 33, 35, 37 rejected
+
+This matches Pattern 2 from dependency prior analysis:
+  "When action A commits to suboptimal direction, all downstream actions
+   inherit degraded baseline, even with different prompts and targets."
+
+--------------------------------------------------------------------------------
+OUTPUT FILES GENERATED
+--------------------------------------------------------------------------------
+
+✅ sampled_traces_phase_3_1.json              (116 B)
+   - Traces sampled for each selected subagent
+
+✅ causal_slicing_chain.json                  (1.4 KB)
+   - Causal segments with root cause attribution
+
+✅ root_cause_locations.json                  (842 B)
+   - Final root cause localization by component
+
+✅ phase3_causal_context_extraction_report.md (8.9 KB)
+   - Detailed analysis report with recommendations
+
+✅ PHASE3_SUMMARY.md                          (This file)
+   - Execution summary and methodology compliance
+
+--------------------------------------------------------------------------------
+CONSTRAINT VERIFICATION
+--------------------------------------------------------------------------------
+
+✅ Constraint 1: root_cause traces ⊆ sampled traces
+   - All traces in root_cause_locations.json were sampled in Phase 3.1
+
+✅ Constraint 2: All sampled traces analyzed
+   - Every trace in sampled_traces_phase_3_1.json appears in root_cause_locations.json
+
+✅ Constraint 3: Root causes differ from manifestation
+   - Phase 2 selected: [instantiate_forall]
+   - Phase 3 identified: [uselemma, instantiate_forall]
+   - New component discovered: uselemma (primary root cause)
+
+--------------------------------------------------------------------------------
+RECOMMENDATIONS FOR PHASE 4
+--------------------------------------------------------------------------------
+
+Priority 1: Optimize uselemma prompt
+  - Add guidance on completing proof bridges after lemma calls
+  - Include examples showing how to connect lemma conclusions to goals
+  - Show how to use lemma results with existing invariants
+  - Expected impact: Prevent 8+ rejections per trace
+
+Priority 2: Optimize instantiate_forall prompt  
+  - Add guidance on when to use contrapositive reasoning in Verus
+  - Clarify proper quantifier instantiation for invariants
+  - Include examples of proof-by-contradiction best practices
+  - Expected impact: Prevent 4+ rejections per trace
+
+Success Metric:
+  - Current: 14 rejections per trace (0% success rate)
+  - Target:  ≤2 rejections per trace (>85% success rate)
+
+--------------------------------------------------------------------------------
+PHASE 3 EXECUTION COMPLETE
+--------------------------------------------------------------------------------
+
+Total Positions Analyzed:     37
+Causal Segments Identified:   2
+Root Causes Found:            2
+Downstream Failures Traced:   12 (86% of total failures)
+
+Next Step: Proceed to Phase 4 (Prompt Optimization)
+           using root_cause_locations.json as input
+
+================================================================================

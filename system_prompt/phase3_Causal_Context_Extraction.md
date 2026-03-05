@@ -40,7 +40,7 @@ For each trace in `output/sampled_traces_phase_3_1.json` and its corresponding t
 
 1. **Extract the execution sequence** from `trace_summaries.json` for the current trace (use python). Each entry has a position (1-based index) and a subagent name. Refer to `output/dependency_prior_analysis.md` for how to determine whether a position **updated the shared state** (e.g., via acceptance criteria, state-change signals, or other system-specific indicators).
 2. **Identify all state-changing positions** — only nodes that updated the shared state form causal dependencies. Non-state-changing positions do NOT affect downstream context.
-3. **Find all positions where the target subagent appears** in the trace.
+3. **Find all positions where the target subagent appears and does not change the state** in the trace.
 4. **Group target positions into causal segments**: A new segment starts whenever a NEW state-changing position appears between target positions. Within a segment, the shared state is identical, so all target positions share the same causal context.
    - **Segment rule**: Consecutive non-state-changing positions of the target subagent (with no intervening state-changing position from any subagent) belong to the **same segment**.
    - **Use the first position** in each segment as the **representative_manifestation_node** — subsequent positions in the same segment are repetitions under identical causal context and will share the same root cause.

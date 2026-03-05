@@ -1,0 +1,50 @@
+{
+  "NR__impl_u__os_refinement__no_overlaps_pmem_applied_mappings-20251128-0.json": {
+    "target_subagent": "instantiate_forall",
+    "segments": [
+      {
+        "segment_positions": [
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23,
+          27
+        ],
+        "representative_manifestation_node": 11,
+        "causal_chain": [
+          1,
+          3,
+          5,
+          9,
+          11
+        ],
+        "root_cause_subagent": "uselemma",
+        "root_cause_position": 9,
+        "reason": "Added vaddr_distinct lemma call but did not complete the proof bridge to show how c1 != c2 implies !overlap using inv_inflight_pmem_no_overlap_inflight_pmem, leaving downstream positions to struggle with the incomplete proof structure"
+      },
+      {
+        "segment_positions": [
+          31,
+          33,
+          35,
+          37
+        ],
+        "representative_manifestation_node": 31,
+        "causal_chain": [
+          1,
+          3,
+          5,
+          9,
+          29,
+          31
+        ],
+        "root_cause_subagent": "instantiate_forall",
+        "root_cause_position": 29,
+        "reason": "Introduced contrapositive reasoning structure (assert c1 == c2 to derive contradiction) but implemented it incorrectly with wrong quantifier instantiation, creating a more complex and broken proof that degraded the baseline"
+      }
+    ]
+  }
+}

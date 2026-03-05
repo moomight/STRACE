@@ -1,0 +1,20 @@
+{
+  "uselemma": [
+    {
+      "trace": "NR__impl_u__os_refinement__no_overlaps_pmem_applied_mappings-20251128-0.json",
+      "location": [
+        9
+      ],
+      "reason": "Added vaddr_distinct lemma call but did not complete the proof bridge to show how c1 != c2 implies !overlap using inv_inflight_pmem_no_overlap_inflight_pmem, leaving downstream positions to struggle with the incomplete proof structure"
+    }
+  ],
+  "instantiate_forall": [
+    {
+      "trace": "NR__impl_u__os_refinement__no_overlaps_pmem_applied_mappings-20251128-0.json",
+      "location": [
+        29
+      ],
+      "reason": "Introduced contrapositive reasoning structure (assert c1 == c2 to derive contradiction) but implemented it incorrectly with wrong quantifier instantiation, creating a more complex and broken proof that degraded the baseline"
+    }
+  ]
+}

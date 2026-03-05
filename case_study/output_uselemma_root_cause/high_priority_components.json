@@ -1,0 +1,57 @@
+{
+  "components": [
+    "instantiate_forall"
+  ],
+  "details": [
+    {
+      "component": "assertion_reasoning_pipeline",
+      "priority_score": 66.076,
+      "failure_rate": 1.0,
+      "cascade_impact": 109.459,
+      "total_calls": 18,
+      "failures": 18,
+      "avg_position": 19.0,
+      "downstream_dependents": 5
+    },
+    {
+      "component": "instantiate_forall",
+      "priority_score": 15.805,
+      "failure_rate": 1.0,
+      "cascade_impact": 25.676,
+      "total_calls": 14,
+      "failures": 14,
+      "avg_position": 22.57,
+      "downstream_dependents": 1
+    },
+    {
+      "component": "postcondition_repair",
+      "priority_score": 2.2,
+      "failure_rate": 1.0,
+      "cascade_impact": 3.0,
+      "total_calls": 1,
+      "failures": 1,
+      "avg_position": 1.0,
+      "downstream_dependents": 1
+    },
+    {
+      "component": "reveal_opaque",
+      "priority_score": 2.135,
+      "failure_rate": 1.0,
+      "cascade_impact": 2.892,
+      "total_calls": 1,
+      "failures": 1,
+      "avg_position": 3.0,
+      "downstream_dependents": 1
+    },
+    {
+      "component": "add_trigger_assert",
+      "priority_score": 2.005,
+      "failure_rate": 1.0,
+      "cascade_impact": 2.676,
+      "total_calls": 1,
+      "failures": 1,
+      "avg_position": 7.0,
+      "downstream_dependents": 1
+    }
+  ]
+}
