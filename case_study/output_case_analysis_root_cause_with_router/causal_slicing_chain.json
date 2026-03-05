@@ -1,0 +1,138 @@
+{
+  "MA__bin_sizes__different_bin_size-20251124-0.json_compute": [
+    {
+      "segment_positions": [
+        9,
+        11,
+        15,
+        17,
+        21,
+        23,
+        27,
+        29,
+        31,
+        33,
+        35
+      ],
+      "representative_manifestation_node": 9,
+      "causal_chain": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        9
+      ],
+      "root_cause_subagent": "case_analysis",
+      "root_cause_position": 5,
+      "reason": "Accepted case_analysis generated overly complex case-by-case proof structure with 9 nested branches requiring compute on complex arithmetic expressions that compute cannot handle"
+    }
+  ],
+  "MA__bin_sizes__different_bin_size-20251124-0.json_assertion_reasoning_pipeline": [
+    {
+      "segment_positions": [
+        2
+      ],
+      "representative_manifestation_node": 2,
+      "causal_chain": [
+        1,
+        2
+      ],
+      "root_cause_subagent": "assertion_reasoning_pipeline",
+      "root_cause_position": 2,
+      "reason": "Router correctly identified need to reveal opaque definition, but this alone insufficient; router succeeded in this decision"
+    },
+    {
+      "segment_positions": [
+        4
+      ],
+      "representative_manifestation_node": 4,
+      "causal_chain": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "root_cause_subagent": "assertion_reasoning_pipeline",
+      "root_cause_position": 4,
+      "reason": "Router selected CASE_ANALYSIS which generated overly complex 9-branch nested proof; should have selected simpler strategy like using lemmas or compute-first approach"
+    },
+    {
+      "segment_positions": [
+        6,
+        8,
+        10,
+        12,
+        14,
+        16,
+        18,
+        20,
+        22,
+        24,
+        26,
+        28,
+        30,
+        32,
+        34,
+        36,
+        38
+      ],
+      "representative_manifestation_node": 6,
+      "causal_chain": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "root_cause_subagent": "case_analysis",
+      "root_cause_position": 5,
+      "reason": "Accepted case_analysis at position 5 created degraded baseline with overly complex proof structure; router repeatedly tries different actions but baseline is fundamentally flawed"
+    }
+  ],
+  "MA__bin_sizes__different_bin_size-20251124-0.json_nonlinear_arithmetic": [
+    {
+      "segment_positions": [
+        7,
+        19,
+        37
+      ],
+      "representative_manifestation_node": 7,
+      "causal_chain": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "root_cause_subagent": "case_analysis",
+      "root_cause_position": 5,
+      "reason": "Accepted case_analysis generated complex nested case structure; nonlinear_arithmetic solver cannot handle the compound arithmetic expressions embedded in multiple case branches"
+    }
+  ],
+  "MA__bin_sizes__different_bin_size-20251124-0.json_uselemma": [
+    {
+      "segment_positions": [
+        25,
+        39
+      ],
+      "representative_manifestation_node": 25,
+      "causal_chain": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        24,
+        25
+      ],
+      "root_cause_subagent": "case_analysis",
+      "root_cause_position": 5,
+      "reason": "Accepted case_analysis created overly complex proof structure; uselemma attempted to use vstd lemmas but they cannot apply to the deeply nested case-analyzed assertions"
+    }
+  ]
+}

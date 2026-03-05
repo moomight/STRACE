@@ -1,0 +1,21 @@
+{
+  "case_analysis": [
+    {
+      "trace": "MA__bin_sizes__different_bin_size-20251124-0.json",
+      "location": [
+        5
+      ],
+      "reason": "Accepted case_analysis generated overly complex case-by-case proof structure with 9 nested branches requiring compute on complex arithmetic expressions that compute cannot handle"
+    }
+  ],
+  "assertion_reasoning_pipeline": [
+    {
+      "trace": "MA__bin_sizes__different_bin_size-20251124-0.json",
+      "location": [
+        2,
+        4
+      ],
+      "reason": "Router selected CASE_ANALYSIS which generated overly complex 9-branch nested proof; should have selected simpler strategy like using lemmas or compute-first approach"
+    }
+  ]
+}

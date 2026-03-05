@@ -44,7 +44,7 @@ For each trace in `output/sampled_traces_phase_3_1.json` and its corresponding t
 4. **Group target positions into causal segments**: A new segment starts whenever a NEW state-changing position appears between target positions. Within a segment, the shared state is identical, so all target positions share the same causal context.
    - **Segment rule**: Consecutive non-state-changing positions of the target subagent (with no intervening state-changing position from any subagent) belong to the **same segment**.
    - **Use the first position** in each segment as the **representative_manifestation_node** — subsequent positions in the same segment are repetitions under identical causal context and will share the same root cause.
-5. **Build the causal chain** for each segment: `[all state-changing positions before the representative, in order] + [representative position]`
+5. **Build the causal chain** for each segment: `[all state-changing positions before the representative position and their corresponding router positions, in chronological order] + [representative position and the corresponding router position]`
 
 **Example**: Given execution sequence:
 ```
@@ -233,6 +233,7 @@ This step is **mechanical aggregation** — use python to transform `output/caus
 **CRITICAL CONSTRAINTS**:
 1. The traces in `output/root_cause_locations.json` MUST be a subset of the traces in `output/sampled_traces_phase_3_1.json`. Do NOT add any trace that was not sampled in phase 3.1.
 2. **Every trace** in `output/sampled_traces_phase_3_1.json` MUST appear in `output/root_cause_locations.json`. If you sampled a trace, you MUST analyze it and include its root cause attribution. No trace should be silently dropped.
+3. For one subagent, if the same trace and same position appear in multiple segments (due to overlapping causal chains), deduplicate into one entry. Different positions within the same trace should remain as separate entries.
 
 Save the result as `output/root_cause_locations.json` with this structure:
 

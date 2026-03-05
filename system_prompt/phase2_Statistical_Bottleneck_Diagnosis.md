@@ -6,7 +6,7 @@ Here is the phase 2.
 ## 2.1 Statistical Failure Analysis -> Failure Attribution Map
 
 You should use python code to analyze the agent flow and agent topological map from traces and generate corresponding files:
-- `trace_summaries.json` (should include a per-position sequence `[subagent_name: outcome, ...]` for each trace for the phase 3's causal slicing)
+- `trace_summaries.json` (should include a per-position sequence `[subagent_name: outcome, ...]` for each trace for the phase 3's causal slicing; for decision/router nodes, the outcome should include the control dependency they chosen)
 - `trace_analysis_report.md`
 
 The traces are stored all in the `traces` directory of the current execution path.
@@ -42,7 +42,7 @@ From the outputs of 2.1: `trace_summaries.json` and `trace_analysis_report.md`:
    - Which components have the highest error contribution rate?
    - Which components are critical failure manifestation points in the pipeline?
    - **Cascade impact**: Using the dependency priors from Phase 1, which components have high fan-out (many downstream dependents)? A frequently-failing upstream component may cause more total damage than a frequently-failing leaf component.
-3. **Rank and select 3~5 high-priority components** that can improve the system's performance most if their prompts are optimized. Weight both **failure frequency** and **cascade impact** (upstream position × downstream dependency count).
+3. **Rank and select 1~5 high-priority components** that can improve the system's performance most if their prompts are optimized. Weight both **failure frequency** and **cascade impact** (upstream position × downstream dependency count).
 
 **Output**: 
 - A ranked list of 1~5 **components** (decision-makers or executors) with brief justification for each selection.
