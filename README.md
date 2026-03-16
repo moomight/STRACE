@@ -1,100 +1,108 @@
 # STRACE: Trajectory Analysis and Causal Extraction for Long-Horizon Agent Optimization
 
-A multi-step agent system that analyzes agent execution traces to identify bottlenecks and optimize multi-agent system performance.
+A toolkit for analyzing multi-agent system execution traces, identifying root causes of failures, and generating prompt optimizations.
 
 ## Overview
 
-STRACE uses a 4-step analysis pipeline on agent execution traces:
+STRACE provides a 4-phase analysis pipeline:
 
-1. **Automated Diagnostic Profiling** - Graph-based Environment Modeling + Statistical Bottleneck Diagnosis
-2. **Structural Bottleneck Localization** - Causal Context Extraction
-3. **Inductive Knowledge Evolution** - Inductive Policy Evolution
-4. (**Scope Boundary Validation** - Validating the scope of identified issues)
+1. **Environment Modeling** — Catalog all components, prompts, and dependencies in a multi-agent system
+2. **Trace Selection** — Sample representative failing traces and reduce token cost
+3. **Causal Root-Cause Attribution** — Backward causal slicing on individual traces to locate failure sources
+4. **Harness Engineering** — Generate concrete prompt modifications (gradients) based on root-cause evidence
+
+## Two Ways to Use
+
+### Option A: Standalone Script (`run.py`)
+
+Run the full pipeline as a single Python process using `claude-agent-sdk`:
+
+```bash
+pip install claude-agent-sdk
+mkdir -p traces && cp /path/to/your/traces/* traces/
+python run.py
+```
+
+The script orchestrates all 4 phases sequentially, reads from `traces/`, and writes results to `output/`.
+
+### Option B: Skills + MCP Tools in Claude Code
+
+Install the 4 skills and MCP tools into any project, then let Claude Code invoke them on demand.
+
+**Setup:**
+
+1. Copy (or symlink) `skills/` and `.mcp.json` into your target project:
+   ```bash
+   cp -r /path/to/STRACE/skills/ /your/project/skills/
+   cp /path/to/STRACE/.mcp.json /your/project/.mcp.json
+   cp /path/to/STRACE/tools_mcp.py /your/project/tools_mcp.py
+   ```
+
+2. Install the MCP dependency in your project's venv:
+   ```bash
+   pip install mcp
+   ```
+
+3. Adjust `.mcp.json` if your venv path differs:
+   ```json
+   {
+     "mcpServers": {
+       "strace-tools": {
+         "command": ".venv/bin/python",
+         "args": ["tools_mcp.py"]
+       }
+     }
+   }
+   ```
+
+4. Open the project in Claude Code and give a task like:
+   ```
+   This is a multi-agent system. I need you to optimize the prompts based on
+   the execution trajectories. The prompts are in <prompts_dir>/ and the
+   traces are in traces/. Improve the success rate while keeping cost low.
+   ```
+   Claude Code will discover the skills and tools, then invoke them as needed.
+
+**Skills provided:**
+
+| Skill | What it does |
+|-------|-------------|
+| `agent-env-modeling` | Reads source code and docs to catalog all agents, prompts, and dependencies |
+| `trace-selection` | Selects representative failing traces and computes execution summaries |
+| `trace-self-debug` | Performs backward causal slicing on a single trace to attribute failure |
+| `harness-engineering` | Generates prompt modification gradients from root-cause evidence |
+
+**MCP Tools provided:**
+
+| Tool | What it does |
+|------|-------------|
+| `search_context_in_file` | Search for text in files with configurable context window |
+| `get_json_structure` | Show JSON file structure as a compact skeleton (type names + fingerprint grouping) |
+| `read_trace_positions` | Read specific numbered positions from trace JSON files with smart truncation |
 
 ## Project Structure
 
 ```
 STRACE/
-├── run.py                 # Main entry point
-├── tools.py               # Custom MCP tools for trace analysis
+├── run.py                 # Standalone entry point (Option A)
+├── tools.py               # Tools for claude-agent-sdk (used by run.py)
+├── tools_mcp.py           # Same tools as MCP server (used by Claude Code)
+├── .mcp.json              # MCP server config for Claude Code
 ├── message_formatter.py   # Output formatting utilities
-├── system_prompt/         # System prompts for each analysis step
-│   ├── Step1_Automated_Diagnostic_Profiling.md
-│   ├── Step2_Structural_Bottleneck_localization.md
-│   ├── Step3_Inductive_Knowledge_Evolution.md
-│   └── Step4_Scope_Boundary_Validation.md
-├── skills/                # Background knowledge documents
-├── traces/                # [Required] Your trace files go here
-└── output/                # Analysis outputs will be saved here
+├── skills/                # Skill definitions (.skill bundles + SKILL.md sources)
+│   ├── agent-env-modeling/
+│   ├── trace-selection/
+│   ├── trace-self-debug/
+│   └── harness-engineering/
+├── system_prompt/         # System prompts for each pipeline phase
+├── prompts/               # Target prompts (example: VeruSAGE)
+├── traces/                # Trace files go here (JSON)
+└── output/                # Analysis outputs
 ```
 
-## Prerequisites
+## Requirements
 
 - Python 3.10+
-
-## Installation
-
-```bash
-# Install dependencies
-pip install claude-agent-sdk
-```
-
-## Usage
-
-### 1. Prepare Your Trace Data
-
-Place your training set trace files in the `traces/` directory:
-
-```bash
-# Create the traces directory
-mkdir -p traces
-
-# Copy your trace files
-cp /path/to/your/training_set/* traces/
-```
-
-> **Note**: The trace files should be JSON format containing agent execution logs.
-
-### 2. Run the Analysis
-
-```bash
-cd STRACE
-python run.py
-```
-
-### 3. Tool Permission
-
-During execution, the system will prompt for tool usage confirmation:
-
-```
-Accept the tool usage? (y/n):
-```
-
-Some tools (like `search_context_in_file`) are auto-accepted. For other tools, type `y` to accept or `n` to deny.
-
-## Custom Tools
-
-The system provides several MCP tools for trace analysis:
-
-| Tool | Description |
-|------|-------------|
-| `search_context_in_file` | Search for patterns in trace files with context window |
-| `get_trace_structure` | Get the structure of a trace file |
-| `read_multiple_line_ranges` | Read specific line ranges from files |
-
-## Configuration
-
-You can modify the permission mode in `run.py`:
-
-```python
-permission_mode="default",  # Options: "default", "acceptEdits", "plan", "bypassPermissions"
-```
-
-## Output
-
-Analysis results are saved in the `output/` directory:
-
-- `trace_summaries.json` - Structured summary of all traces
-- `trace_analysis_report.md` - Human-readable analysis report
-- Additional files generated during the analysis
+- `claude-agent-sdk` (for Option A)
+- `mcp` (for Option B)
 

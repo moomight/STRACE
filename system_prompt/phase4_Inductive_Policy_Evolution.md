@@ -9,7 +9,6 @@ Here is the phase 4.
 
 First, read these files to understand the system:
 - `task_background.md` — what this multi-agent system is
-- `skills/localize.md` — how to attribute failures (Router vs Action responsibility)
 
 Then read `output/root_cause_locations.json` from phase 3. It tells you which subagents caused failures with the specific locations and reasons.
 

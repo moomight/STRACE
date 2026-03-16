@@ -96,13 +96,13 @@ import re
 
 @tool(
     name="search_context_in_file",
-    description="Search for a target string in a file using a character window strategy. Returns a specific number of characters around the match. Can optionally filter results to only include matches within specific sub_agent_calling_N blocks by providing a locations list.",
+    description="Search for target_text in a file and return surrounding context (configurable character window). If filter_positions is provided, only return matches that fall inside the corresponding sub_agent_calling_N blocks — this narrows the search scope, it does NOT replace target_text.",
     input_schema={
         "file_path": str, 
         "target_text": str,
         "window_before": int,  # Characters before match, default 400
         "window_after": int,   # Characters after match, default 400
-        "locations": list      # Optional: list of subagent numbers to filter, e.g., [1, 3, 5] means only search in sub_agent_calling_1, sub_agent_calling_3, sub_agent_calling_5
+        "filter_positions": list  # Optional: only keep matches inside these sub_agent_calling_N blocks, e.g., [1, 3, 5]
     }
 )
 async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
@@ -111,7 +111,7 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
     # Default: 400 chars before and after (roughly 200-300 tokens total)
     window_before = args.get("window_before", 400)
     window_after = args.get("window_after", 400)
-    locations = args.get("locations", None)  # e.g., [1, 3, 4, 5, 6]
+    filter_positions = args.get("filter_positions", None)  # e.g., [1, 3, 4, 5, 6]
     
     # Limit window size to prevent excessive output
     window_before = max(0, min(window_before, 2000))
@@ -125,9 +125,9 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
             content = f.read()
         
-        # 2. If locations is specified, find the character ranges for each sub_agent_calling_N
+        # 2. If filter_positions is specified, find the character ranges for each sub_agent_calling_N
         subagent_ranges = {}
-        if locations:
+        if filter_positions:
             # Find all sub_agent_calling_N patterns and their positions
             # Pattern: "sub_agent_calling_N": { ... }
             pattern = r'"sub_agent_calling_(\d+)"'
@@ -154,12 +154,12 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
                 end_pos = pos
                 subagent_ranges[agent_num] = (start_pos, end_pos)
             
-            # Filter to only include specified locations
+            # Filter to only include specified positions
             valid_ranges = [(subagent_ranges[loc][0], subagent_ranges[loc][1], loc) 
-                           for loc in locations if loc in subagent_ranges]
+                           for loc in filter_positions if loc in subagent_ranges]
             
             if not valid_ranges:
-                return {"content": [{"type": "text", "text": f"No matching sub_agent_calling blocks found for locations {locations}"}]}
+                return {"content": [{"type": "text", "text": f"No matching sub_agent_calling blocks found for filter_positions {filter_positions}"}]}
         
         total_len = len(content)
         all_matches_output = []
@@ -172,11 +172,11 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
             if match_index == -1:
                 break
             
-            # 4. If locations is specified, check if this match is within a valid subagent block
+            # 4. If filter_positions is specified, check if this match is within a valid subagent block
             in_valid_location = True
             matched_location = None
             
-            if locations:
+            if filter_positions:
                 in_valid_location = False
                 for start, end, loc_num in valid_ranges:
                     if start <= match_index < end:
@@ -219,15 +219,15 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
             current_pos = match_index + len(target_text)
 
         if match_count == 0:
-            location_msg = f" within sub_agent_calling {locations}" if locations else ""
-            return {"content": [{"type": "text", "text": f"Not found: '{target_text}'{location_msg}"}]}
+            filter_msg = f" within sub_agent_calling {filter_positions}" if filter_positions else ""
+            return {"content": [{"type": "text", "text": f"Not found: '{target_text}'{filter_msg}"}]}
 
-        location_filter_msg = f" (filtered by locations: {locations})" if locations else ""
+        filter_info = f" (filtered by positions: {filter_positions})" if filter_positions else ""
         final_output = "\n\n".join(all_matches_output)
         return {
             "content": [{
                 "type": "text", 
-                "text": f"Found {match_count} matches in '{file_path}'{location_filter_msg}. Showing {window_before} chars before and {window_after} chars after each match:\n\n{final_output}"
+                "text": f"Found {match_count} matches in '{file_path}'{filter_info}. Showing {window_before} chars before and {window_after} chars after each match:\n\n{final_output}"
             }]
         }
 
@@ -237,151 +237,101 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
 
 @tool(
     name="get_json_structure",
-    description="Extract and analyze the structure of a JSON file, recursively breaking down all nested dictionaries and lists. For each value, returns its type and length/size information.",
+    description="Show the structure of a JSON file by replacing leaf values with their type names (int, string, bool, null, float). Groups dict keys that share the same value structure using fingerprinting, showing one representative and listing the rest. Ideal for understanding unfamiliar JSON formats quickly.",
     input_schema={
         "file_path": str
     }
 )
 async def get_json_structure(args: dict[str, Any]) -> dict[str, Any]:
-    """
-    Recursively analyze JSON structure and return detailed type and size information.
-    
-    For each element:
-    - dict: returns structure of all keys
-    - list: returns structure with length and first few element types
-    - str: returns type and length
-    - numbers: returns type and value
-    - bool/null: returns type
-    """
     file_path = args.get("file_path")
     
-    # Validation
     if not file_path or not os.path.exists(file_path):
-        return {
-            "content": [{
-                "type": "text",
-                "text": f"Error: File does not exist or path is empty: {file_path}"
-            }],
-            "isError": True
-        }
+        return {"content": [{"type": "text", "text": f"Error: File not found: {file_path}"}], "isError": True}
     
     try:
         import json
         
-        # Read JSON file
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        def analyze_structure(obj, path="root", max_depth=50, current_depth=0):
-            """Recursively analyze the structure of any JSON object."""
-            if current_depth > max_depth:
-                return f"<max depth {max_depth} reached>"
-            
-            obj_type = type(obj).__name__
-            
-            if obj is None:
-                return {"type": "null"}
-            
-            elif isinstance(obj, bool):
-                return {"type": "bool", "value": obj}
-            
-            elif isinstance(obj, (int, float)):
-                return {"type": obj_type, "value": obj}
-            
-            elif isinstance(obj, str):
-                return {
-                    "type": "string",
-                    "length": len(obj),
-                    "preview": obj[:50] + "..." if len(obj) > 50 else obj
-                }
-            
+        def get_fingerprint(v, depth=0):
+            """Produce a structural fingerprint for grouping."""
+            if depth > 4:
+                return type(v).__name__
+            if v is None: return "null"
+            elif isinstance(v, bool): return "bool"
+            elif isinstance(v, int): return "int"
+            elif isinstance(v, float): return "float"
+            elif isinstance(v, str): return "string"
+            elif isinstance(v, list):
+                if len(v) == 0: return "list(0)[]"
+                return f"list({len(v)})[{get_fingerprint(v[0], depth+1)}]"
+            elif isinstance(v, dict):
+                sorted_keys = sorted(v.keys())
+                inner = ", ".join(f"{k}: {get_fingerprint(v[k], depth+1)}" for k in sorted_keys[:12])
+                suffix = ", ..." if len(v) > 12 else ""
+                return "{" + inner + suffix + "}"
+            return type(v).__name__
+        
+        def to_skeleton(obj, max_depth=20, depth=0):
+            """Replace leaf values with type names, group same-structure dict keys."""
+            if depth > max_depth:
+                return "..."
+            if obj is None: return "null"
+            elif isinstance(obj, bool): return "bool"
+            elif isinstance(obj, int): return "int"
+            elif isinstance(obj, float): return "float"
+            elif isinstance(obj, str): return "string"
             elif isinstance(obj, list):
-                structure = {
-                    "type": "list",
-                    "length": len(obj),
-                    "elements": []
-                }
-                
-                # Analyze first few elements and unique types
-                sampled_indices = []
-                if len(obj) > 0:
-                    # Sample: first, middle, last elements (up to 5 total)
-                    sampled_indices = [0]
-                    if len(obj) > 1:
-                        sampled_indices.append(len(obj) - 1)
-                    if len(obj) > 2:
-                        sampled_indices.insert(1, len(obj) // 2)
-                    if len(obj) > 5:
-                        sampled_indices.insert(1, len(obj) // 4)
-                        sampled_indices.insert(-1, 3 * len(obj) // 4)
-                    
-                    sampled_indices = sorted(set(sampled_indices))[:5]
-                
-                for idx in sampled_indices:
-                    element_structure = analyze_structure(
-                        obj[idx], 
-                        f"{path}[{idx}]", 
-                        max_depth, 
-                        current_depth + 1
-                    )
-                    structure["elements"].append({
-                        "index": idx,
-                        "structure": element_structure
-                    })
-                
-                return structure
-            
+                if len(obj) == 0:
+                    return f"[] (0 items)"
+                # Show skeleton of first element + length
+                elem_skeleton = to_skeleton(obj[0], max_depth, depth + 1)
+                return {f"[0..{len(obj)-1}] ({len(obj)} items, showing [0])": elem_skeleton}
             elif isinstance(obj, dict):
-                structure = {
-                    "type": "dict",
-                    "num_keys": len(obj),
-                    "keys": {}
-                }
+                if len(obj) == 0:
+                    return "{}"
+                keys_list = list(obj.keys())
+                # Fingerprint all keys
+                groups = {}
+                for key in keys_list:
+                    fp = get_fingerprint(obj[key])
+                    if fp not in groups:
+                        groups[fp] = []
+                    groups[fp].append(key)
                 
-                for key, value in obj.items():
-                    key_path = f"{path}.{key}" if path != "root" else key
-                    structure["keys"][key] = analyze_structure(
-                        value, 
-                        key_path, 
-                        max_depth, 
-                        current_depth + 1
-                    )
-                
-                return structure
-            
-            else:
-                return {"type": obj_type, "value": str(obj)[:100]}
+                result = {}
+                for fp, group_keys in groups.items():
+                    if len(group_keys) == 1:
+                        # Unique structure — show directly
+                        k = group_keys[0]
+                        result[k] = to_skeleton(obj[k], max_depth, depth + 1)
+                    else:
+                        # Multiple keys share structure — show representative + list others
+                        rep = group_keys[0]
+                        if len(group_keys) <= 8:
+                            others = group_keys[1:]
+                        else:
+                            others = group_keys[1:4] + ["..."] + group_keys[-2:]
+                        label = f"{rep}  (+ {len(group_keys)-1} similar: {', '.join(str(o) for o in others)})"
+                        result[label] = to_skeleton(obj[rep], max_depth, depth + 1)
+                return result
+            return str(type(obj).__name__)
         
-        # Analyze the entire structure
-        structure = analyze_structure(data)
-        
-        # Format as compact JSON string
-        import json
-        formatted_output = json.dumps(structure, ensure_ascii=False)
+        skeleton = to_skeleton(data)
+        formatted = json.dumps(skeleton, ensure_ascii=False, indent=2)
         
         return {
             "content": [{
                 "type": "text",
-                "text": f"Structure of '{file_path}':\n\n{formatted_output}"
+                "text": f"Structure of '{file_path}':\n\n{formatted}"
             }]
         }
     
     except json.JSONDecodeError as e:
-        return {
-            "content": [{
-                "type": "text",
-                "text": f"Error: Invalid JSON format in '{file_path}': {str(e)}"
-            }],
-            "isError": True
-        }
+        return {"content": [{"type": "text", "text": f"Error: Invalid JSON in '{file_path}': {str(e)}"}], "isError": True}
     except Exception as e:
-        return {
-            "content": [{
-                "type": "text",
-                "text": f"Error reading file '{file_path}': {str(e)}"
-            }],
-            "isError": True
-        }
+        return {"content": [{"type": "text", "text": f"Error reading '{file_path}': {str(e)}"}], "isError": True}
 
 
 @tool(
