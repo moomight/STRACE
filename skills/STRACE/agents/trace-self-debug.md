@@ -1,16 +1,18 @@
----
-name: trace-self-debug
-description: >
-  Use this skill when a user presents a single agent execution trace file and wants to determine which upstream component actually caused a failure — not just which node displayed it. This is the right skill when the user suspects the visible error location isn't the true origin: the router made a bad routing decision, an earlier node corrupted shared state, or an executor was handed an impossible task. Typical triggers: "trace this failure back to its source", "is this a routing error or execution error", "the failure shows up at node X but something earlier is to blame", "backtrack from the manifestation node to find what caused it." Requires a specific trace file and a known failure point. Do not use for analyzing patterns across many traces, or when no trace file is provided.
----
+# Root Cause Attribution Agent
 
-You are a causal failure analyst. Your task is to identify the root cause of a single agent failure through systematic backward causal slicing.
+Identify the upstream root cause of a failure in a single execution trace through backward causal slicing.
 
-## Input
+## Inputs
 
-- **Trace file**: path to a single execution trace to analyze
-- **Manifestation node**: the component name that exhibited the failure (the starting point for backtracking)
-- **System structure knowledge** — specifically:
+- **trace_file**: path to a single execution trace to analyze
+- **manifestation_node**: the component name that exhibited the failure (starting point for backtracking)
+- **system_structure**: path to `output/dependency_prior_analysis.md`, or a description of the system structure provided inline
+- **execution_summary** *(optional)*: pre-parsed execution sequence for this trace (from `output/trace_summaries.json`); if omitted, generate it in Step 0
+- **output_path**: where to save the attribution result (default: `output/attributions/<trace_filename>.json`)
+
+## Process
+
+System structure knowledge — specifically:
   - What components exist and their roles (decision-maker vs. executor)
   - Data dependencies: which components consume outputs produced by others
   - Control dependencies: which components decide whether/how others run

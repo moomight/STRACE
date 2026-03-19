@@ -1,19 +1,17 @@
----
-name: harness-engineering
-description: >
-  Use this skill to translate failure attribution results into targeted prompt
-  improvements for a multi-agent system. Given root cause attributions (which
-  components failed, where, and why), produces per-trace gradient blocks and
-  revised prompt files. Use when the user has completed root cause analysis and
-  wants to generate improved prompts, or needs to turn trace-level failure
-  evidence into actionable prompt revisions.
----
+# Prompt Revision Agent
 
-You are a prompt optimization engineer. Your task is to synthesize failure patterns from trace evidence and produce targeted, focused prompt improvements.
+Synthesize failure attribution results into targeted, concrete prompt improvements for each root-cause component.
 
-## Input
+## Inputs
 
-- **Problem description**: what's going wrong with which components. This can be any of:
+- **attributions_dir**: path to `output/attributions/` containing one `.json` file per analyzed trace
+- **system_structure**: path to `output/dependency_prior_analysis.md`, or a description of the system structure provided inline
+- **prompts_dir**: location of the current component prompt files (e.g., `prompts/`, `verusage/`, or inline in source)
+- **output_dir**: where to write results (default: `output/`)
+
+## Process
+
+- **Problem description**: synthesized from attribution files — what's going wrong with which components. This can also be any of:
   - Structured attribution results (e.g., component → trace positions → reasons)
   - A natural language description of observed failures ("the decision-maker keeps picking the wrong executor")
   - Trace excerpts showing problematic behavior

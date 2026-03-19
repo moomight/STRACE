@@ -25,15 +25,15 @@ python run.py
 
 The script orchestrates all 4 phases sequentially, reads from `traces/`, and writes results to `output/`.
 
-### Option B: Skills + MCP Tools in Claude Code
+### Option B: STRACE Skill + MCP Tools in Claude Code
 
-Install the 4 skills and MCP tools into any project, then let Claude Code invoke them on demand.
+Install the `STRACE` skill and MCP tools into any project, then let Claude Code run the pipeline on demand.
 
 **Setup:**
 
-1. Copy (or symlink) `skills/` and `.mcp.json` into your target project:
+1. Copy the STRACE skill, MCP config, and tools into your target project:
    ```bash
-   cp -r /path/to/STRACE/skills/ /your/project/skills/
+   cp -r /path/to/STRACE/skills/STRACE/ /your/project/skills/STRACE/
    cp /path/to/STRACE/.mcp.json /your/project/.mcp.json
    cp /path/to/STRACE/tools_mcp.py /your/project/tools_mcp.py
    ```
@@ -59,18 +59,20 @@ Install the 4 skills and MCP tools into any project, then let Claude Code invoke
    ```
    This is a multi-agent system. I need you to optimize the prompts based on
    the execution trajectories. The prompts are in <prompts_dir>/ and the
-   traces are in traces/. Improve the success rate while keeping cost low.
+   trajectories are in traces/. Improve the success rate while keeping cost low.
    ```
-   Claude Code will discover the skills and tools, then invoke them as needed.
+   Claude Code will discover the STRACE skill, triage the situation, and run the appropriate pipeline stages.
 
-**Skills provided:**
+**Pipeline stages** (orchestrated by `skills/STRACE/SKILL.md`):
 
-| Skill | What it does |
-|-------|-------------|
-| `agent-env-modeling` | Reads source code and docs to catalog all agents, prompts, and dependencies |
-| `trace-selection` | Selects representative failing traces and computes execution summaries |
-| `trace-self-debug` | Performs backward causal slicing on a single trace to attribute failure |
-| `harness-engineering` | Generates prompt modification gradients from root-cause evidence |
+| Stage | Agent | What it does |
+|-------|-------|-------------|
+| 1 | `agent-env-modeling` | Catalog all components, prompts, and dependencies |
+| 2 | `trace-selection` | Select representative failing traces, compute execution summaries |
+| 3 | `trace-self-debug` | Backward causal slicing on individual traces to attribute failures |
+| 4 | `harness-engineering` | Generate prompt modifications (gradients) from root-cause evidence |
+
+The skill includes a **triage step** that decides which stages to skip based on existing outputs and context.
 
 **MCP Tools provided:**
 
@@ -86,16 +88,18 @@ Install the 4 skills and MCP tools into any project, then let Claude Code invoke
 STRACE/
 ├── run.py                 # Standalone entry point (Option A)
 ├── tools.py               # Tools for claude-agent-sdk (used by run.py)
-├── tools_mcp.py           # Same tools as MCP server (used by Claude Code)
+├── tools_mcp.py           # Same tools as MCP server (used by Option B)
 ├── .mcp.json              # MCP server config for Claude Code
 ├── message_formatter.py   # Output formatting utilities
-├── skills/                # Skill definitions (.skill bundles + SKILL.md sources)
-│   ├── agent-env-modeling/
-│   ├── trace-selection/
-│   ├── trace-self-debug/
-│   └── harness-engineering/
-├── system_prompt/         # System prompts for each pipeline phase
-├── prompts/               # Target prompts (example: VeruSAGE)
+├── skills/
+│   └── STRACE/            # Unified skill (Option B)
+│       ├── SKILL.md       # Orchestrator with triage + pipeline
+│       └── agents/        # Stage-specific agent instructions
+│           ├── agent-env-modeling.md
+│           ├── trace-selection.md
+│           ├── trace-self-debug.md
+│           └── harness-engineering.md
+├── system_prompt/         # System prompts for each pipeline phase (Option A)
 ├── traces/                # Trace files go here (JSON)
 └── output/                # Analysis outputs
 ```

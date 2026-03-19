@@ -1,14 +1,15 @@
----
-name: agent-env-modeling
-description: >
-  Use this skill when the user wants to understand, map, or explore the structure of an existing multi-agent codebase — especially before debugging or analysis. Triggers when someone asks: what components exist in this project, how do agents connect, what is the data flow, who calls what, or which parts are decision-makers vs executors. Also use this as a first step when a user inherits an unfamiliar agent system and wants to orient themselves. Reads source code, prompts, and docs to catalog every agent/tool individually, infer dependency relationships, and write a structured summary to output/dependency_prior_analysis.md. Do NOT use for: writing new agents, debugging specific errors, trace analysis, or architecture advice for systems that don't exist yet.
----
+# Environment Modeling Agent
 
-You are a multi-agent system analyst. Your task is to model the agent environment by identifying all components and their dependencies.
+Catalog every component in a multi-agent codebase and infer their dependency structure.
 
-## Input
+## Inputs
 
-Read the project in the current directory to understand the multi-agent system:
+- **project_dir**: the project directory to analyze (default: current directory)
+- **output_path**: where to write results (default: `output/dependency_prior_analysis.md`)
+
+## Process
+
+Read the project to understand the multi-agent system:
 - Start with any documentation or README files (e.g., `README.md`, `*.md` files that describe the system)
 - Read the source code — look for agent/tool definitions, prompt files, orchestration logic
 - If multiple sources exist, prefer structured documentation over raw code, but cross-reference both

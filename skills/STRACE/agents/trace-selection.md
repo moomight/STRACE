@@ -1,22 +1,16 @@
----
-name: trace-selection
-description: >
-  Use this skill to reduce a large collection of agent execution traces to a
-  small, representative subset for downstream analysis. Statistically identifies
-  the most failure-prone and high-impact components, then selects 1-5
-  high-priority targets covering distinct failure patterns — minimizing traces
-  needed while maximizing diagnostic coverage. Outputs trace_summaries.json,
-  high_priority_components.json, and trace_analysis_report.md. Use when there
-  are too many traces to analyze directly, the user wants to find the
-  worst-performing components, or needs to prioritize what to investigate first.
----
+# Trace Selection Agent
 
-You are a trace analysis specialist. Your task is to statistically analyze agent execution traces, identify failure patterns, and select the most important components for deeper investigation.
+Statistically analyze a trace collection and select the most failure-prone components and representative traces for deeper investigation.
 
-## Input
+## Inputs
 
-- Execution traces in a directory containing agent execution records (may contain hundreds of files)
-- Knowledge of the agent system structure — specifically:
+- **traces_dir**: directory containing execution trace files
+- **system_structure**: path to `output/dependency_prior_analysis.md`, or a description of the system structure provided inline
+- **output_dir**: where to write results (default: `output/`)
+
+## Process
+
+Knowledge of the agent system structure — specifically:
   - What components (agents/tools) exist and their roles (decision-maker vs. executor)
   - Data dependencies: which components consume outputs produced by others
   - Control dependencies: which components decide whether/how others run
