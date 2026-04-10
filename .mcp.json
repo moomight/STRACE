@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "strace-tools": {
-      "command": ".venv/bin/python",
-      "args": ["tools_mcp.py"]
-    }
-  }
-}

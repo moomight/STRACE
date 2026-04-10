@@ -1,5 +1,5 @@
 ---
-name: STRACE
+name: strace
 description: >
   Optimize a multi-agent system's prompts or other components using trajectory data, 
   improve performance while reducing analysis cost — even at large scale.
@@ -8,9 +8,9 @@ description: >
   large collections. Do NOT use for building new agents from scratch, or when no traces exist.
 ---
 
-# STRACE — Multi-Agent System Trace Analysis & Repair Pipeline
+# strace — Multi-Agent System Trace Analysis & Repair Pipeline
 
-STRACE is a skill with a four-stage pipeline for diagnosing and improving multi-agent systems. 
+strace is a skill with a four-stage pipeline for diagnosing and improving multi-agent systems. 
 Each stage is run as an independent subagent using instructions from `agents/`. 
 Stages pass context forward via files written to `output/`.
 
@@ -100,6 +100,47 @@ then revised prompt files. Validates that decision-maker / executor boundaries a
 
 **Skip if**: user only wants diagnosis, not prompt fixes.  
 **Output**: `output/prompts_revised/<name>_revised.md`, `output/prompt_mapping.json`
+
+---
+
+## Trace Scripts
+
+Three utility scripts in `scripts/` for reading and searching trace files. Use these instead of
+loading full trace files — they handle truncation, structure inspection, and targeted search.
+
+When spawning subagents for Stages 2–4, include the relevant script usage in the subagent prompt
+so it knows how to read traces efficiently.
+
+### `scripts/get_json_structure.py` — Inspect trace structure
+
+Show the schema of a JSON file with type placeholders. Use this first on an unfamiliar trace
+to understand its format before reading specific positions.
+
+```bash
+python scripts/get_json_structure.py <file_path>
+```
+
+### `scripts/read_trace_positions.py` — Read specific positions
+
+Read specific 1-based positions from a trace file. Supports dict-keyed traces
+(`sub_agent_calling_N`, `step_N`, etc.) and list-based traces. Long strings are
+automatically truncated.
+
+```bash
+python scripts/read_trace_positions.py <file_path> <pos1> <pos2> ...
+python scripts/read_trace_positions.py trace.json 1 3 5 --max-string-length 3000
+```
+
+### `scripts/search_context_in_file.py` — Search with context
+
+Search for text in a trace file and return surrounding context. Optionally filter
+to specific `sub_agent_calling_N` blocks.
+
+```bash
+python scripts/search_context_in_file.py <file_path> <target_text>
+python scripts/search_context_in_file.py trace.json "error" --window-before 600 --window-after 600
+python scripts/search_context_in_file.py trace.json "failed" --filter-positions 2 5 8
+```
 
 ---
 

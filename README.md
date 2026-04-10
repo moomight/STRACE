@@ -25,45 +25,35 @@ python run.py
 
 The script orchestrates all 4 phases sequentially, reads from `traces/`, and writes results to `output/`.
 
-### Option B: STRACE Skill + MCP Tools in Claude Code
+### Option B: Agent Skill `strace`
 
-Install the `STRACE` skill and MCP tools into any project, then let Claude Code run the pipeline on demand.
+Install the `strace` skill into any project, then let your coding agent run the pipeline on demand.
 
 **Setup:**
 
-1. Copy the STRACE skill, MCP config, and tools into your target project:
+1. Copy the `strace` skill into your target project:
    ```bash
-   cp -r /path/to/STRACE/skills/STRACE/ /your/project/skills/STRACE/
-   cp /path/to/STRACE/.mcp.json /your/project/.mcp.json
-   cp /path/to/STRACE/tools_mcp.py /your/project/tools_mcp.py
+   cp -r /path/to/STRACE/skills/strace/ /your/project/<agent-skill-dir>/strace/
    ```
 
-2. Install the MCP dependency in your project's venv:
+   For example, in Claude Code this is typically:
    ```bash
-   pip install mcp
+   cp -r /path/to/STRACE/skills/strace/ /your/project/.claude/skills/strace/
+   ```
+   In Copilot CLI this is:
+   ```bash
+   cp -r /path/to/STRACE/skills/strace/ /your/project/.github/skills/strace/
    ```
 
-3. Adjust `.mcp.json` if your venv path differs:
-   ```json
-   {
-     "mcpServers": {
-       "strace-tools": {
-         "command": ".venv/bin/python",
-         "args": ["tools_mcp.py"]
-       }
-     }
-   }
-   ```
-
-4. Open the project in Claude Code and give a task like:
+2. Open the project in your coding agent environment and give a task like:
    ```
    This is a multi-agent system. I need you to optimize the prompts based on
    the execution trajectories. The prompts are in <prompts_dir>/ and the
    trajectories are in traces/. Improve the success rate while keeping cost low.
    ```
-   Claude Code will discover the STRACE skill, triage the situation, and run the appropriate pipeline stages.
+   Your agent can discover the `strace` skill, triage the situation, and run the appropriate pipeline stages.
 
-**Pipeline stages** (orchestrated by `skills/STRACE/SKILL.md`):
+**Pipeline stages** (orchestrated by `skills/strace/SKILL.md`):
 
 | Stage | Agent | What it does |
 |-------|-------|-------------|
@@ -74,13 +64,13 @@ Install the `STRACE` skill and MCP tools into any project, then let Claude Code 
 
 The skill includes a **triage step** that decides which stages to skip based on existing outputs and context.
 
-**MCP Tools provided:**
+The skill includes helper scripts under `skills/strace/scripts/` for targeted trace inspection:
 
 | Tool | What it does |
 |------|-------------|
-| `search_context_in_file` | Search for text in files with configurable context window |
-| `get_json_structure` | Show JSON file structure as a compact skeleton (type names + fingerprint grouping) |
-| `read_trace_positions` | Read specific numbered positions from trace JSON files with smart truncation |
+| `scripts/search_context_in_file.py` | Search for text in files with configurable context window |
+| `scripts/get_json_structure.py` | Show JSON file structure as a compact skeleton (type names + fingerprint grouping) |
+| `scripts/read_trace_positions.py` | Read specific numbered positions from trace JSON files with smart truncation |
 
 ## Project Structure
 
@@ -88,17 +78,19 @@ The skill includes a **triage step** that decides which stages to skip based on 
 STRACE/
 ├── run.py                 # Standalone entry point (Option A)
 ├── tools.py               # Tools for claude-agent-sdk (used by run.py)
-├── tools_mcp.py           # Same tools as MCP server (used by Option B)
-├── .mcp.json              # MCP server config for Claude Code
 ├── message_formatter.py   # Output formatting utilities
 ├── skills/
-│   └── STRACE/            # Unified skill (Option B)
+│   └── strace/            # Unified skill (Option B)
 │       ├── SKILL.md       # Orchestrator with triage + pipeline
-│       └── agents/        # Stage-specific agent instructions
-│           ├── agent-env-modeling.md
-│           ├── trace-selection.md
-│           ├── trace-self-debug.md
-│           └── harness-engineering.md
+│       ├── agents/        # Stage-specific agent instructions
+│       │   ├── agent-env-modeling.md
+│       │   ├── trace-selection.md
+│       │   ├── trace-self-debug.md
+│       │   └── harness-engineering.md
+│       └── scripts/       # Helper scripts for targeted trace inspection
+│           ├── get_json_structure.py
+│           ├── read_trace_positions.py
+│           └── search_context_in_file.py
 ├── system_prompt/         # System prompts for each pipeline phase (Option A)
 ├── traces/                # Trace files go here (JSON)
 └── output/                # Analysis outputs
@@ -108,5 +100,4 @@ STRACE/
 
 - Python 3.10+
 - `claude-agent-sdk` (for Option A)
-- `mcp` (for Option B)
 
