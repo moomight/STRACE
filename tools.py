@@ -92,7 +92,6 @@ import os
 import asyncio
 from typing import Any
 from claude_agent_sdk import tool
-import re
 
 @tool(
     name="search_context_in_file",
@@ -119,92 +118,46 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
 
     if not file_path or not os.path.exists(file_path):
         return {"content": [{"type": "text", "text": f"Error: File not found: {file_path}"}], "isError": True}
+    if target_text == "":
+        return {"content": [{"type": "text", "text": "Error: target_text must not be empty."}], "isError": True}
 
     try:
         # 1. Read entire file content
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
             content = f.read()
         
-        # 2. If filter_positions is specified, find the character ranges for each sub_agent_calling_N
-        subagent_ranges = {}
-        if filter_positions:
-            # Find all sub_agent_calling_N patterns and their positions
-            # Pattern: "sub_agent_calling_N": { ... }
-            pattern = r'"sub_agent_calling_(\d+)"'
-            
-            for match in re.finditer(pattern, content):
-                agent_num = int(match.group(1))
-                start_pos = match.start()
-                
-                # Find the end of this sub_agent block by counting braces
-                # Start after the opening brace
-                brace_start = content.find('{', match.end())
-                if brace_start == -1:
-                    continue
-                
-                brace_count = 1
-                pos = brace_start + 1
-                while pos < len(content) and brace_count > 0:
-                    if content[pos] == '{':
-                        brace_count += 1
-                    elif content[pos] == '}':
-                        brace_count -= 1
-                    pos += 1
-                
-                end_pos = pos
-                subagent_ranges[agent_num] = (start_pos, end_pos)
-            
-            # Filter to only include specified positions
-            valid_ranges = [(subagent_ranges[loc][0], subagent_ranges[loc][1], loc) 
-                           for loc in filter_positions if loc in subagent_ranges]
-            
-            if not valid_ranges:
-                return {"content": [{"type": "text", "text": f"No matching sub_agent_calling blocks found for filter_positions {filter_positions}"}]}
-        
-        total_len = len(content)
         all_matches_output = []
         match_count = 0
-        current_pos = 0
-        
-        # 3. Search for all matches
-        while True:
-            match_index = content.find(target_text, current_pos)
-            if match_index == -1:
-                break
-            
-            # 4. If filter_positions is specified, check if this match is within a valid subagent block
-            in_valid_location = True
-            matched_location = None
-            
-            if filter_positions:
-                in_valid_location = False
-                for start, end, loc_num in valid_ranges:
-                    if start <= match_index < end:
-                        in_valid_location = True
-                        matched_location = loc_num
-                        break
-            
-            if in_valid_location:
+
+        def search_text(search_content: str, matched_location: int | None = None) -> bool:
+            nonlocal match_count
+            total_len = len(search_content)
+            current_pos = 0
+
+            while True:
+                match_index = search_content.find(target_text, current_pos)
+                if match_index == -1:
+                    return False
+
                 match_count += 1
                 
-                # 5. Calculate slice window
                 start_idx = max(0, match_index - window_before)
                 end_idx = min(total_len, match_index + len(target_text) + window_after)
                 
-                # Extract snippet
-                snippet = content[start_idx:end_idx]
+                snippet = search_content[start_idx:end_idx]
                 
-                # 6. Calculate line number for reference
-                line_number = content.count('\n', 0, match_index) + 1
+                line_number = search_content.count('\n', 0, match_index) + 1
                 
-                # 7. Format output
                 clean_snippet = snippet.replace('\n', '↩')
                 
-                location_info = f" [sub_agent_calling_{matched_location}]" if matched_location else ""
+                location_info = f" [sub_agent_calling_{matched_location}]" if matched_location is not None else ""
+                location_scope = f" within sub_agent_calling_{matched_location}" if matched_location is not None else ""
+                line_label = "Block Line" if matched_location is not None else "Line"
+                char_label = "Block char index" if matched_location is not None else "Char index"
                 
                 block = (
-                    f"=== Match #{match_count} (Approx. Line {line_number}){location_info} ===\n"
-                    f"Location: Char index {match_index} to {match_index + len(target_text)}\n"
+                    f"=== Match #{match_count} (Approx. {line_label} {line_number}){location_info} ===\n"
+                    f"Location: {char_label} {match_index} to {match_index + len(target_text)}{location_scope}\n"
                     f"Content Context:\n"
                     f"...{clean_snippet}..."
                 )
@@ -213,10 +166,29 @@ async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
                 
                 if len(all_matches_output) >= 20:
                     all_matches_output.append("\n(Stopping after 20 matches)")
+                    return True
+
+                current_pos = match_index + len(target_text)
+
+        if filter_positions:
+            data = json.loads(content)
+            if not isinstance(data, dict):
+                return {"content": [{"type": "text", "text": "Error: filter_positions requires a top-level JSON object."}], "isError": True}
+
+            filtered_blocks = []
+            for loc in filter_positions:
+                key = f"sub_agent_calling_{loc}"
+                if key in data:
+                    filtered_blocks.append((loc, json.dumps(data[key], ensure_ascii=False, indent=2)))
+
+            if not filtered_blocks:
+                return {"content": [{"type": "text", "text": f"No matching sub_agent_calling blocks found for filter_positions {filter_positions}"}]}
+
+            for loc, block_content in filtered_blocks:
+                if search_text(block_content, loc):
                     break
-            
-            # Move to next position
-            current_pos = match_index + len(target_text)
+        else:
+            search_text(content)
 
         if match_count == 0:
             filter_msg = f" within sub_agent_calling {filter_positions}" if filter_positions else ""
@@ -545,6 +517,11 @@ async def read_trace_positions(args: dict[str, Any]) -> dict[str, Any]:
             "content": [{"type": "text", "text": "Error: No positions provided."}],
             "isError": True
         }
+    if max_len < 2:
+        return {
+            "content": [{"type": "text", "text": "Error: max_string_length must be at least 2."}],
+            "isError": True
+        }
     
     def truncate_strings(obj, max_len, depth=0):
         """Recursively truncate long strings in a JSON object."""
@@ -621,7 +598,7 @@ async def read_trace_positions(args: dict[str, Any]) -> dict[str, Any]:
         for pos in sorted(positions):
             key_label, value = entries.get(pos, (None, None))
             
-            if value is None:
+            if key_label is None:
                 result_blocks.append(f"=== Position {pos} ===\n⚠️ Not found (total entries: {total})")
                 continue
             

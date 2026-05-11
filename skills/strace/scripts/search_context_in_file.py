@@ -8,7 +8,6 @@ corresponding sub_agent_calling_N blocks.
 import argparse
 import json
 import os
-import re
 import sys
 
 
@@ -24,81 +23,77 @@ def search_context(
 
     if not file_path or not os.path.exists(file_path):
         raise ValueError(f"File not found: {file_path}")
+    if target_text == "":
+        raise ValueError("target_text must not be empty.")
 
     with open(file_path, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
 
-    # If filter_positions is specified, find the character ranges for each sub_agent_calling_N
-    subagent_ranges: dict[int, tuple[int, int]] = {}
-    valid_ranges: list[tuple[int, int, int]] = []
-    if filter_positions:
-        pattern = r'"sub_agent_calling_(\d+)"'
-        for match in re.finditer(pattern, content):
-            agent_num = int(match.group(1))
-            start_pos = match.start()
-            brace_start = content.find("{", match.end())
-            if brace_start == -1:
-                continue
-            brace_count = 1
-            pos = brace_start + 1
-            while pos < len(content) and brace_count > 0:
-                if content[pos] == "{":
-                    brace_count += 1
-                elif content[pos] == "}":
-                    brace_count -= 1
-                pos += 1
-            subagent_ranges[agent_num] = (start_pos, pos)
-
-        valid_ranges = [
-            (subagent_ranges[loc][0], subagent_ranges[loc][1], loc)
-            for loc in filter_positions
-            if loc in subagent_ranges
-        ]
-        if not valid_ranges:
-            return f"No matching sub_agent_calling blocks found for filter_positions {filter_positions}"
-
-    total_len = len(content)
     all_matches_output: list[str] = []
     match_count = 0
-    current_pos = 0
 
-    while True:
-        match_index = content.find(target_text, current_pos)
-        if match_index == -1:
-            break
+    def search_text(search_content: str, matched_location: int | None = None) -> bool:
+        nonlocal match_count
+        total_len = len(search_content)
+        current_pos = 0
 
-        in_valid_location = True
-        matched_location = None
-        if filter_positions:
-            in_valid_location = False
-            for start, end, loc_num in valid_ranges:
-                if start <= match_index < end:
-                    in_valid_location = True
-                    matched_location = loc_num
-                    break
+        while True:
+            match_index = search_content.find(target_text, current_pos)
+            if match_index == -1:
+                return False
 
-        if in_valid_location:
             match_count += 1
             start_idx = max(0, match_index - window_before)
             end_idx = min(total_len, match_index + len(target_text) + window_after)
-            snippet = content[start_idx:end_idx]
-            line_number = content.count("\n", 0, match_index) + 1
+            snippet = search_content[start_idx:end_idx]
+            line_number = search_content.count("\n", 0, match_index) + 1
             clean_snippet = snippet.replace("\n", "↩")
             location_info = (
-                f" [sub_agent_calling_{matched_location}]" if matched_location else ""
+                f" [sub_agent_calling_{matched_location}]"
+                if matched_location is not None
+                else ""
             )
+            location_scope = (
+                f" within sub_agent_calling_{matched_location}"
+                if matched_location is not None
+                else ""
+            )
+            line_label = "Block Line" if matched_location is not None else "Line"
+            char_label = "Block char index" if matched_location is not None else "Char index"
             block = (
-                f"=== Match #{match_count} (Approx. Line {line_number}){location_info} ===\n"
-                f"Location: Char index {match_index} to {match_index + len(target_text)}\n"
+                f"=== Match #{match_count} (Approx. {line_label} {line_number}){location_info} ===\n"
+                f"Location: {char_label} {match_index} to {match_index + len(target_text)}{location_scope}\n"
                 f"Content Context:\n"
                 f"...{clean_snippet}..."
             )
             all_matches_output.append(block)
             if len(all_matches_output) >= 20:
                 all_matches_output.append("\n(Stopping after 20 matches)")
-                break
+                return True
 
-        current_pos = match_index + len(target_text)
+            current_pos = match_index + len(target_text)
+
+    if filter_positions:
+        data = json.loads(content)
+        if not isinstance(data, dict):
+            raise ValueError("filter_positions requires a top-level JSON object.")
+
+        filtered_blocks: list[tuple[int, str]] = []
+        for loc in filter_positions:
+            key = f"sub_agent_calling_{loc}"
+            if key in data:
+                filtered_blocks.append(
+                    (loc, json.dumps(data[key], ensure_ascii=False, indent=2))
+                )
+
+        if not filtered_blocks:
+            return f"No matching sub_agent_calling blocks found for filter_positions {filter_positions}"
+
+        for loc, block_content in filtered_blocks:
+            if search_text(block_content, loc):
+                break
+    else:
+        search_text(content)
 
     if match_count == 0:
         filter_msg = (

@@ -39,6 +39,8 @@ def read_trace_positions(
         raise ValueError(f"File does not exist: {file_path}")
     if not positions:
         raise ValueError("No positions provided.")
+    if max_string_length < 2:
+        raise ValueError("max_string_length must be at least 2.")
 
     max_len = max_string_length
 
@@ -88,7 +90,7 @@ def read_trace_positions(
     result_blocks: list[str] = []
     for pos in sorted(positions):
         key_label, value = entries.get(pos, (None, None))
-        if value is None:
+        if key_label is None:
             result_blocks.append(
                 f"=== Position {pos} ===\n⚠️ Not found (total entries: {total})"
             )
@@ -118,7 +120,7 @@ def main() -> None:
         "--max-string-length",
         type=int,
         default=2000,
-        help="Truncate strings longer than this (default: 2000)",
+        help="Truncate strings longer than this (default: 2000, min: 2)",
     )
 
     args = parser.parse_args()
