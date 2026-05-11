@@ -77,7 +77,7 @@ The skill includes helper scripts under `skills/strace/scripts/` for targeted tr
 ```
 STRACE/
 ├── run.py                 # Standalone entry point (Option A)
-├── tools.py               # Tools for claude-agent-sdk (used by run.py)
+├── utils.py               # Utility tools for claude-agent-sdk (used by run.py)
 ├── message_formatter.py   # Output formatting utilities
 ├── skills/
 │   └── strace/            # Unified skill (Option B)

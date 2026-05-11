@@ -3,11 +3,11 @@ import os
 from claude_agent_sdk import query, ClaudeAgentOptions, ClaudeSDKClient
 from message_formatter import MessageFormatter, Colors
 from claude_agent_sdk import create_sdk_mcp_server
-from tools import search_context_in_file, get_json_structure, read_multiple_line_ranges, get_trace_statistics, get_trace_detail, read_trace_positions
+from utils import search_context_in_file, get_json_structure, read_multiple_line_ranges, read_trace_positions
 from claude_agent_sdk import ToolPermissionContext, PermissionResultAllow, PermissionResultDeny
 from claude_agent_sdk.types import HookMatcher, SyncHookJSONOutput
 
-mcp_server = create_sdk_mcp_server("poagent-tools", tools=[search_context_in_file, get_json_structure, read_multiple_line_ranges, read_trace_positions])
+mcp_server = create_sdk_mcp_server("strace-utils", tools=[search_context_in_file, get_json_structure, read_multiple_line_ranges, read_trace_positions])
 os.environ["CLAUDE_CODE_STREAM_CLOSE_TIMEOUT"] = "3000000"  # Set timeout to 50 minutes
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -69,15 +69,15 @@ async def main():
             # tools=["Write", "Read", "Bash", "Glob", "mcp__mcp1__search_context_in_file", "mcp__mcp1__get_json_structure", "mcp__mcp1__read_multiple_line_ranges", "mcp__mcp1__read_trace_positions"],
             permission_mode="default", #["default", "acceptEdits", "plan", "bypassPermissions"]
             can_use_tool=can_use_tool_callback,
-            add_dirs=["/home/v-yingchang/X-agent/"],
-            cwd=os.getcwd(),
+            cwd=SCRIPT_DIR,
             hooks={
                 "PreCompact": [HookMatcher(hooks=[on_pre_compact])],
             },
         )
 
         async with ClaudeSDKClient(options=options) as client:
-            # Phase 1
+            # Phase 1 Graph-based Environment Modeling:
+            # Capturing the data and control dependencies between the various components of multi-agent systems
             print(f"Phase1: Graph-based Environment Modeling...")
             await client.query(wrap_prompt(phase1_prompt + "\n\nExecute the above steps now."))
             async for message in client.receive_response():
@@ -89,7 +89,8 @@ async def main():
             async for message in client.receive_response():
                 pass
 
-            # Phase 2
+            # Phase 2 Statistical Bottleneck Diagnosis:
+            # Identifying the most critical components and interactions that limit the overall performance of the system
             print(f"\n\nPhase2: Statistical Bottleneck Diagnosis...")
             await client.query(wrap_prompt(phase2_prompt + "\n\nExecute the above steps now."))
             async for message in client.receive_response():
@@ -101,13 +102,13 @@ async def main():
             async for message in client.receive_response():
                 pass
 
-            # Phase 3
+            # Phase 3 Causal Context Extraction:
+            # Distill the essential causal context and isolation the root causes
             print(f"\n\nPhase3: Causal Context Extraction...")
             await client.query(wrap_prompt(phase3_prompt + "\n\nExecute the above steps now."))
             async for message in client.receive_response():
                 formatter.format_message(message)
 
-        # Phase 4 - separate session, not sharing the previous session's context
         phase4_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase4_Inductive_Policy_Evolution.md"))
         Phase4_options = ClaudeAgentOptions(
             system_prompt=phase4_prompt,
@@ -115,10 +116,12 @@ async def main():
             allowed_tools=["Task", "Write", "Read", "Bash", "Glob", "mcp__mcp1__search_context_in_file", "mcp__mcp1__get_json_structure", "mcp__mcp1__read_multiple_line_ranges", "mcp__mcp1__read_trace_positions"],
             permission_mode="default",
             can_use_tool=can_use_tool_callback,
-            add_dirs=["/home/v-yingchang/X-agent/"],
-            cwd=os.getcwd(),
+            cwd=SCRIPT_DIR,
         )
 
+        # Phase 4 Inductive Policy Evolution - separate session, not sharing the previous session's context
+        # Focusing on evolving the agent's policy based on the insights gained from the previous phases, 
+        # aiming to improve decision-making and performance in complex environments.
         print(f"\n\nPhase4: Inductive Policy Evolution...")
         async for message in query(
             prompt=wrap_prompt("Follow the steps in the prompt to do the inductive policy evolution."),

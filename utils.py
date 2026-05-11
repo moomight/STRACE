@@ -1,97 +1,11 @@
 import os
-import asyncio
 from typing import Any
 from claude_agent_sdk import tool
 import json
 
-# @tool(
-#     name="search_context_in_file",
-#     description="Search for a target string in a specified file and return the surrounding context (10 lines before and after each match).",
-#     input_schema={
-#         "file_path": str, 
-#         "target_text": str
-#     }
-# )
-# async def search_context_in_file(args: dict[str, Any]) -> dict[str, Any]:
-#     file_path = args.get("file_path")
-#     target_text = args.get("target_text")
-    
-#     # 1. Basic validation
-#     if not file_path or not os.path.exists(file_path):
-#         return {
-#             "content": [{
-#                 "type": "text",
-#                 "text": f"Error: File does not exist or path is empty: {file_path}"
-#             }],
-#             "isError": True
-#         }
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_TRACE_SUMMARY_FILE = os.path.join(REPO_ROOT, "output", "trace_summaries.json")
 
-#     try:
-#         # 2. Read file
-#         with open(file_path, 'r', encoding='utf-8') as f:
-#             lines = f.readlines()
-        
-#         all_matches_output = []
-#         match_count = 0
-
-#         # 3. Iterate and search all matches
-#         for i, line in enumerate(lines):
-#             if target_text in line:
-#                 match_count += 1
-                
-#                 # 4. Calculate slice range (10 lines before and after)
-#                 start_idx = max(0, i - 10)
-#                 end_idx = min(len(lines), i + 11)
-                
-#                 # Extract context lines
-#                 context_lines = lines[start_idx:end_idx]
-                
-#                 # Format single match block
-#                 block_content = []
-#                 block_content.append(f"=== Match #{match_count} (at line {i+1}) ===")
-                
-#                 for idx, ctx_line in enumerate(context_lines):
-#                     current_line_no = start_idx + idx + 1
-#                     # Mark the line containing the target string
-#                     prefix = ">> " if (start_idx + idx) == i else "   "
-#                     block_content.append(f"{prefix}Line {current_line_no}: {ctx_line.rstrip()}")
-                
-#                 # Add this complete context block to the results list
-#                 all_matches_output.append("\n".join(block_content))
-        
-#         # 5. Process results
-#         if match_count == 0:
-#             return {
-#                 "content": [{
-#                     "type": "text",
-#                     "text": f"Target string '{target_text}' not found in file {file_path}"
-#                 }]
-#             }
-
-#         # Join all blocks with newline characters
-#         final_output = "\n\n".join(all_matches_output)
-        
-#         return {
-#             "content": [{
-#                 "type": "text",
-#                 "text": f"Found {match_count} matches, details as follows:\n\n{final_output}"
-#             }]
-#         }
-
-#     except Exception as e:
-#         return {
-#             "content": [{
-#                 "type": "text",
-#                 "text": f"Error occurred while reading the file: {str(e)}"
-#             }],
-#             "isError": True
-#         }
-
-
-import os
-import asyncio
-from typing import Any
-from claude_agent_sdk import tool
 
 @tool(
     name="search_context_in_file",
@@ -641,7 +555,7 @@ async def get_trace_statistics(args: dict[str, Any]) -> dict[str, Any]:
     Read pre-computed trace statistics from JSON summary file.
     This avoids expensive full-trace reads.
     """
-    summary_file = args.get("summary_file", "/home/v-yingchang/PO_agent_demo-main/ClaudeAgentSDK/trace_summaries.json")
+    summary_file = args.get("summary_file", DEFAULT_TRACE_SUMMARY_FILE)
     
     if not os.path.exists(summary_file):
         return {
@@ -750,7 +664,7 @@ async def get_trace_detail(args: dict[str, Any]) -> dict[str, Any]:
     Much cheaper than reading the full trace file.
     """
     trace_name = args.get("trace_name")
-    summary_file = args.get("summary_file", "/home/v-yingchang/PO_agent_demo-main/ClaudeAgentSDK/trace_summaries.json")
+    summary_file = args.get("summary_file", DEFAULT_TRACE_SUMMARY_FILE)
     
     if not trace_name:
         return {
@@ -834,25 +748,3 @@ async def get_trace_detail(args: dict[str, Any]) -> dict[str, Any]:
             }],
             "isError": True
         }
-
-
-if __name__ == "__main__":
-    # Test read_multiple_line_ranges
-    test_args = {
-        "file_path": "/home/v-yingchang/PO_agent_demo-main/ClaudeAgentSDK/traces/definitions_u__impl3__lemma_entry_sizes_increase-0.json",
-        "line_ranges": [
-            [28, 52],
-            [79, 103],
-            [130, 154],
-            [181, 205],
-            [232, 256],
-            [283, 307],
-            [334, 358],
-            [385, 409],
-            [436, 460]
-        ]
-    }
-    
-    result = asyncio.run(read_multiple_line_ranges.handler(test_args))
-    print(result["content"][0]["text"][:1000])  # Print first 1000 chars
-    print(f"\n... (total length: {len(result['content'][0]['text'])} characters)")
