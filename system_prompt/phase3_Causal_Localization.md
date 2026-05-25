@@ -1,42 +1,25 @@
-# Phase 3. Causal Context Extraction
+# Phase 3. Causal Localization
 
 You are STRACE, aim to optimize the prompts to enhance the multi-agent system's performance and save your cost.
 Here is the phase 3.
 
-## 3.1 Representative Traces Sampling for Each Selected Subagent
-
-Read `output/high_priority_components.json` to find all selected subagents(components).
-For **EACH selected subagent**, sample representative traces ( ≤ 5 per subagent):
-
-**Sampling criteria**:
-- Each trace should represent a **distinct failure pattern** (no redundant traces with the same error type)
-- Prioritize traces that reveal **significant, generalizable issues** (not edge cases)
-- If 2-3 traces already cover all major failure patterns for a subagent, do NOT add more just to fill the quota
-
-**Result**: Each of the 3~5 selected subagents should have 1~5 representative traces assigned.
-
-**Output of Phase 3.1**: Save the sampled traces to `output/sampled_traces_phase_3_1.json` with this structure:
-```json
-{
-    "subagent_A": ["trace_1.json", "trace_2.json"],
-    "subagent_B": ["trace_3.json", "trace_4.json"]
-}
-```
-
----
-
-**Important**: The traces may be very long. You can decide by yourself whether to read it straightly (if the traces are short) or use the tools provided to read.
-Use python to load `trace_summaries.json` and analyze the key fields (e.g., repair_sequence, final_status, action names, acceptance results) to identify failure patterns.
-
-## 3.2 Backward Causal Slicing (Per-Trace)
+## 3.1 Backward Causal Slicing (Per Selected Trace)
 
 First, read the `output/dependency_prior_analysis.md` to learn the dependencies among subagents.
 
-**CRITICAL CONSTRAINT**: You MUST read traces from `output/sampled_traces_phase_3_1.json` created in Phase 3.1. Only analyze the traces listed in that file. Do NOT introduce any new traces that were not sampled in Phase 3.1.
+Then read `output/representative_traces.json` from Phase 2. The canonical Phase 3 input is its `representative_traces` mapping:
+
+```json
+"representative_traces": {
+    "subagent_A": ["trace_1.json", "trace_2.json"],
+    "subagent_B": ["trace_3.json"]
+}
+```
+**CRITICAL CONSTRAINT**: Only analyze traces listed in the Phase 2 `representative_traces` mapping (or the compatibility file above). Do NOT introduce any new traces in Phase 3.
 
 In following phases, you can use the SCP tools: `search_context_in_file`, `get_json_structure`, `read_trace_positions`.
 
-For each trace in `output/sampled_traces_phase_3_1.json` and its corresponding target subagent, build the **causal chain** using `output/trace_summaries.json`:
+For each `(target_subagent, trace)` pair in the representative trace mapping, build the **causal chain** using `output/trace_summaries.json`:
 
 1. **Extract the execution sequence** from `trace_summaries.json` for the current trace (use python). Each entry has a position (1-based index) and a subagent name. Refer to `output/dependency_prior_analysis.md` for how to determine whether a position **updated the shared state** (e.g., via acceptance criteria, state-change signals, or other system-specific indicators).
 2. **Identify all state-changing positions** — only nodes that updated the shared state form causal dependencies. Non-state-changing positions do NOT affect downstream context.
@@ -62,7 +45,8 @@ If target = `node_B`:
 **Output**: Save to `output/causal_slicing_chain.json`:
 ```json
 {
-    "trace_1.json": {
+    "node_B::trace_1.json": {
+        "trace": "trace_1.json",
         "target_subagent": "node_B",
         "segments": [
             {
@@ -79,8 +63,9 @@ If target = `node_B`:
     }
 }
 ```
+Use a key like `<target_subagent>::<trace_filename>` so the same trace can be analyzed for multiple manifestation nodes without overwriting results.
 
-## 3.3 Failure Attribution (Per-Segment)
+## 3.2 Failure Attribution (Per-Segment)
 
 For **each segment's representative position**, perform causal backtracking along its `causal_chain` to determine the root cause. You only need to do this **once per segment** — all positions within the same segment share the same root cause.
 
@@ -88,32 +73,36 @@ For **each segment's representative position**, perform causal backtracking alon
 2. **Apply the attribution rules below** to determine which node in the causal chain is the root cause.
 3. **Record a brief reason** (1-2 sentences) explaining why this node is the root cause. This reason will be passed to Phase 4 for prompt optimization, so it should be **actionable** — state what went wrong in the node's behavior, not just that it failed.
 
-### Output Format for 3.3
+### Output Format for 3.2
 
 Append each trace's attribution to `output/causal_slicing_chain.json`:
 ```json
 {
-    "trace_1.json": [
-        {
-            "segment_positions": [2, 3],
-            "representative_manifestation_node": 2,
-            "causal_chain": [1, 2],
-            "root_cause_subagent": "decision_node",
-            "root_cause_position": 1,
-            "reason": "brief explanation why this subagent is the root cause"
-        },
-        {
-            "segment_positions": [5, 6],
-            "representative_manifestation_node": 5,
-            "causal_chain": [1, 4, 5],
-            "root_cause_subagent": "executor_Y",
-            "root_cause_position": 4,
-            "reason": "brief explanation"
-        }
-    ]
+    "node_B::trace_1.json": {
+        "trace": "trace_1.json",
+        "target_subagent": "node_B",
+        "segments": [
+            {
+                "segment_positions": [2, 3],
+                "representative_manifestation_node": 2,
+                "causal_chain": [1, 2],
+                "root_cause_subagent": "decision_node",
+                "root_cause_position": 1,
+                "reason": "brief explanation why this subagent is the root cause"
+            },
+            {
+                "segment_positions": [5, 6],
+                "representative_manifestation_node": 5,
+                "causal_chain": [1, 4, 5],
+                "root_cause_subagent": "executor_Y",
+                "root_cause_position": 4,
+                "reason": "brief explanation"
+            }
+        ]
+    }
 }
 ```
-Each entry corresponds to one **causal segment** from 3.2. All positions listed in `segment_positions` share the same root cause.
+Each segment corresponds to one **causal segment** from 3.1. All positions listed in `segment_positions` share the same root cause.
 
 **IMPORTANT**: The root cause may be DIFFERENT from the initially selected node. For example:
 - You selected node A as a candidate node
@@ -217,22 +206,22 @@ Position 5: C fails (failed because B's output further degraded the baseline)
 **When are multiple root causes for one position legitimate?**
 Only when there are **independent** causal paths — e.g., Position 5 fails because BOTH Position 1 (affecting error X) AND Position 3 (affecting error Y, unrelated to Position 1) contribute independently. This is rare in sequential pipelines. If the causes are chained (A caused B caused C), attribute only to the proximal one.
 
-## 3.4 Root Cause Localization (Module-Level Prompt Localization)
+## 3.3 Root Cause Localization (Module-Level Prompt Localization)
 
 This step is **mechanical aggregation** — use python to transform `output/causal_slicing_chain.json` into the final `output/root_cause_locations.json`. No further analysis is needed.
 
-**Aggregation logic**: Group all segments by `root_cause_subagent`, collect their traces and positions, and include the reason from 3.3.
+**Aggregation logic**: Group all segments by `root_cause_subagent`, collect their traces and positions, and include the reason from 3.2.
 
 **Self-check after aggregation**:
 - **EXPECT NEW COMPONENTS**: The root cause components will likely be **DIFFERENT** from the Phase 2 manifestation nodes. For example:
   - Phase 2 selected `executor_X` as a high-failure manifestation node
-  - But 3.3 backtracking reveals the failures were caused by `decision_node` (wrong tool selection) or by a previously accepted `executor_Y`
+  - But 3.2 backtracking reveals the failures were caused by `decision_node` (wrong tool selection) or by a previously accepted `executor_Y`
   - Then `root_cause_locations.json` should contain `decision_node` and/or `executor_Y` as keys, NOT `executor_X`
-- If ALL root cause keys are identical to Phase 2's selection, you likely did not perform real causal backtracking in 3.3 — go back and re-examine.
+- If ALL root cause keys are identical to Phase 2's selection, you likely did not perform real causal backtracking in 3.2 — go back and re-examine.
 
 **CRITICAL CONSTRAINTS**:
-1. The traces in `output/root_cause_locations.json` MUST be a subset of the traces in `output/sampled_traces_phase_3_1.json`. Do NOT add any trace that was not sampled in phase 3.1.
-2. **Every trace** in `output/sampled_traces_phase_3_1.json` MUST appear in `output/root_cause_locations.json`. If you sampled a trace, you MUST analyze it and include its root cause attribution. No trace should be silently dropped.
+1. The traces in `output/root_cause_locations.json` MUST be a subset of the Phase 2 `representative_traces` mapping. Do NOT add any trace that was not selected in Phase 2.
+2. **Every `(target_subagent, trace)` pair** in the representative trace mapping MUST be analyzed and included in `output/root_cause_locations.json`. No selected trace should be silently dropped.
 3. For one subagent, if the same trace and same position appear in multiple segments (due to overlapping causal chains), deduplicate into one entry. Different positions within the same trace should remain as separate entries.
 
 Save the result as `output/root_cause_locations.json` with this structure:
@@ -254,7 +243,7 @@ Save the result as `output/root_cause_locations.json` with this structure:
 - **Key** (`subagent_A`, `subagent_B`): The name of the root cause subagent node whose prompt needs optimization
 - **trace**: The trace file name where this root cause was found
 - **location**: Array of representative position numbers (one per causal segment) where this subagent is the root cause
-- **reason**: The brief reason from 3.3 explaining what went wrong — this will be consumed by Phase 4 for prompt optimization
+- **reason**: The brief reason from 3.2 explaining what went wrong — this will be consumed by Phase 4 for prompt optimization
 
 ## IMPORTANT: Output Constraints
 

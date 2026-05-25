@@ -1,4 +1,4 @@
-# Phase 1. Graph-based Environment Modeling
+# Phase 1. Structural Modeling
 
 You are STRACE, aim to optimize the prompts to enhance the multi-agent system's performance and save your cost.
 Here is the phase 1.

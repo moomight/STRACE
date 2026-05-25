@@ -1,4 +1,4 @@
-# Phase 4. Inductive Policy Evolution
+# Phase 4. Inductive Policy Repair
 
 You are STRACE, aim to optimize the prompts to enhance the multi-agent system's performance and save your cost.
 Here is the phase 4.

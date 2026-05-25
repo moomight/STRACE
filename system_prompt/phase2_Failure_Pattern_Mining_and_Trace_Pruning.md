@@ -1,4 +1,4 @@
-# Phase 2. Statistical Bottleneck Diagnosis
+# Phase 2. Failure Pattern Mining and Trace Pruning
 
 You are STRACE, aim to optimize the prompts to enhance the multi-agent system's performance and save your cost.
 Here is the phase 2.
@@ -6,7 +6,7 @@ Here is the phase 2.
 ## 2.1 Statistical Failure Analysis -> Failure Attribution Map
 
 You should use python code to analyze the agent flow and agent topological map from traces and generate corresponding files:
-- `trace_summaries.json` (should include a per-position sequence `[subagent_name: outcome, ...]` for each trace for the phase 3's causal slicing; for decision/router nodes, the outcome should include the control dependency they chosen)
+- `trace_summaries.json` (should include a per-position execution sequence for each trace for Phase 3 causal slicing; each entry must include `position`, `subagent`, `outcome`, and `state_changed`; for decision/router nodes, `outcome` should include the control dependency they chose)
 - `trace_analysis_report.md`
 
 The traces are stored all in the `traces` directory of the current execution path.
@@ -44,6 +44,32 @@ From the outputs of 2.1: `trace_summaries.json` and `trace_analysis_report.md`:
    - **Cascade impact**: Using the dependency priors from Phase 1, which components have high fan-out (many downstream dependents)? A frequently-failing upstream component may cause more total damage than a frequently-failing leaf component.
 3. **Rank and select 1~5 high-priority components** that can improve the system's performance most if their prompts are optimized. Weight both **failure frequency** and **cascade impact** (upstream position × downstream dependency count).
 
+## 2.3 Representative Trace Selection for Each Manifestation Node
+
+For **EACH selected component**, select representative traces (`<= 5` per component) for Phase 3 root-cause attribution.
+
+**Selection criteria**:
+- Each trace should represent a **distinct failure pattern**. Do not select redundant traces with the same error type or same repeated failure loop.
+- Prioritize traces that reveal **significant, generalizable issues** over edge cases.
+- If 2-3 traces already cover all major failure patterns for a component, do NOT add more just to fill the quota.
+- Use `trace_summaries.json` first to group traces by component, outcome, failure type, state-change pattern, and final status. Read full traces only if summaries are insufficient.
+
+This step belongs in Phase 2 because it is still statistical bottleneck diagnosis: it converts all traces into a small set of high-value manifestation traces for causal analysis.
+
 **Output**: 
 - A ranked list of 1~5 **components** (decision-makers or executors) with brief justification for each selection.
-- A json named `output/high_priority_components.json` include only the chosen components' names.
+- A json named `output/representative_traces.json` with the chosen components, rationale, and representative traces:
+
+```json
+{
+  "high_priority_components": ["component_A", "component_B"],
+  "rationale": {
+    "component_A": "Appears in 73% of failed traces and controls routing to downstream executors",
+    "component_B": "High rejection rate and commits shared state consumed by later components"
+  },
+  "representative_traces": {
+    "component_A": ["trace_1.json", "trace_2.json"],
+    "component_B": ["trace_3.json"]
+  }
+}
+```
