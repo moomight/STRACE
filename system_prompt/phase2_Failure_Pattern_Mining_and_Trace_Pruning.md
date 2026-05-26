@@ -7,7 +7,7 @@ Here is the phase 2.
 
 You should use python code to analyze the agent flow and agent topological map from traces and generate corresponding files:
 - `trace_summaries.json` (should include a per-position execution sequence for each trace for Phase 3 causal slicing; each entry must include `position`, `subagent`, `outcome`, and `state_changed`; for decision/router nodes, `outcome` should include the control dependency they chose)
-- `trace_analysis_report.md`
+- `trace_analysis_report.md` (must include the analysis steps used to derive the statistics, not only the final tables)
 
 The traces are stored all in the `traces` directory of the current execution path.
 
@@ -26,7 +26,9 @@ After this step, you should learn the background and output the statistical fail
 2. **DO NOT** repeat or paraphrase trace contents in your responses
 3. **KEEP** your analysis concise - focus on key statistics and patterns
 4. **FOCUS** on producing `trace_summaries.json` and `trace_analysis_report.md` efficiently
-5. **LIMIT** `trace_analysis_report.md` to essential findings only (max 500 words)
+5. **LIMIT** `trace_analysis_report.md` to essential findings only (roughly 500-800 words)
+6. **INCLUDE** an explicit `Analysis Steps` section covering parsing, outcome classification, state-change inference, failure grouping, and router/control-dependency checks
+7. **DO NOT** dump every trace's full execution sequence into the report; summarize repeated patterns and cite only representative traces
 
 **Your primary outputs are the JSON and report files. Minimize all other text.**
 

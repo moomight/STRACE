@@ -1,9 +1,0 @@
-{
-    "high_priority_components": [
-        "postcondition_repair",
-        "case_analysis",
-        "compute",
-        "seqsetmap",
-        "add_trigger_assert"
-    ]
-}

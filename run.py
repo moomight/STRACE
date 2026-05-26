@@ -57,9 +57,9 @@ async def main():
         yield {"type": "user", "message": {"role": "user", "content": text}}
 
     try:
-        phase1_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase1_Graph-based_Environment_Modeling.md"))
-        phase2_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase2_Statistical_Bottleneck_Diagnosis.md"))
-        phase3_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase3_Causal_Context_Extraction.md"))
+        phase1_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase1_Structural_Modeling.md"))
+        phase2_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase2_Failure_Pattern_Mining_and_Trace_Pruning.md"))
+        phase3_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase3_Causal_Localization.md"))
 
         options = ClaudeAgentOptions(
             mcp_servers={"mcp1": mcp_server},
@@ -109,7 +109,7 @@ async def main():
             async for message in client.receive_response():
                 formatter.format_message(message)
 
-        phase4_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase4_Inductive_Policy_Evolution.md"))
+        phase4_prompt = read_system_prompt(os.path.join(SCRIPT_DIR, "system_prompt/phase4_Inductive_Policy_Repair.md"))
         Phase4_options = ClaudeAgentOptions(
             system_prompt=phase4_prompt,
             mcp_servers={"mcp1": mcp_server},
